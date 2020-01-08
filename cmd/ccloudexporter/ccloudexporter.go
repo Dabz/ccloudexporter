@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
-	"github.com/Dabz/cmd/internal/scrapper"
+	"github.com/Dabz/ccloudexporter/cmd/internal/scrapper"
 )
 
 func main() {
