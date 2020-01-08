@@ -1,0 +1,19 @@
+version: '3.1'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/prometheus.yml
+    command:
+      - '--config.file=/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: always
+  ccloud_exporter:
+    build: ./
+    environment:
+      CCLOUD_USER: ${CCLOUD_USER}
+      CCLOUD_PASSWORD: ${CCLOUD_PASSWORD}
+      CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
+    command: ccloudexporter ${CCLOUD_CLUSTER}
