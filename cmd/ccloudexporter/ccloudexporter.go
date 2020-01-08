@@ -8,12 +8,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"net/http"
+	"github.com/Dabz/ccloudexporter/cmd/internal/scrapper"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
-	"github.com/Dabz/ccloudexporter/cmd/internal/scrapper"
+	"net/http"
+	"os"
 )
 
 func main() {
@@ -46,5 +46,10 @@ func main() {
 	scrapper.FetchMetricsFromEndpointRoutine(cluster)
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":2112", nil)
+	err := http.ListenAndServe(":2112", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Listening on http://localhost:2112/metrics")
 }
