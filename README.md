@@ -22,4 +22,6 @@ In order to use the scrapper, the following environment variable need to be spec
 
 ## How to build
 
-TODO
+```
+go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
+```
