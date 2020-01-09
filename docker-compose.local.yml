@@ -11,7 +11,7 @@ services:
       - 9090:9090
     restart: always
   ccloud_exporter:
-    image: dabz/ccloudexporter
+    build: ./
     environment:
       CCLOUD_USER: ${CCLOUD_USER}
       CCLOUD_PASSWORD: ${CCLOUD_PASSWORD}
