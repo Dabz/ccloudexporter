@@ -15,32 +15,29 @@ To use the scrapper, the following environment variables need to be specified:
 ````
 
 ## Examples
+## Building and executing 
 ```
+go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
+go install github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 export CCLOUD_USER=toto@confluent.io
 export CCLOUD_PASSWORD=totopassword
 ./ccloudexporter lkc-abc123  
 ```
 
+## Using docker
+```
+docker run -e CCLOUD_USER=$CCLOUD_USER -e CCLOUD_PASSWORD=$CCLOUD_PASSWORD dabz/ccloudexporter:latest ccloudexporter lkc-abc123
+```
+
+## Using docker-compose
 ```
 export CCLOUD_USER=toto@confluent.io
 export CCLOUD_PASSWORD=totopassword
 export CCLOUD_CLUSTER=lkc-abc123
 docker-compose up -d
-```
-
-```
-export CCLOUD_USER=toto@confluent.io
-export CCLOUD_PASSWORD=totopassword
-export CCLOUD_CLUSTER=lkc-abc123
-docker-compose up -d
-```
-
-```
-docker run -e CCLOUD_USER=$CCLOUD_USER -e CCLOUD_PASSWORD=$CCLOUD_PASSWORD dabz/ccloudexporter:latest ccloudexporter lkc-ldrq7
 ```
 
 ## How to build
-
 ```
 go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 ```
