@@ -55,8 +55,8 @@ func FetchMetricsFromEndpointRoutine(cluster string) {
 	// Main routine scraping the Confluent Cloud API endpoint
 	go func() {
 		for {
-			from := time.Now().Add(time.Minute * -5)
-			to := time.Now().Add(time.Minute)
+			from := time.Now().Add(time.Minute * - 3)
+			to := time.Now().Add(time.Minute * - 1)
 			for metric, gauge := range gaugeMetrics {
 				query := BuildQuery(metric, cluster, from, to)
 				response := SendQuery(query)
