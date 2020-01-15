@@ -19,20 +19,8 @@ import (
 )
 
 var (
-	topicList = make(map[string]*kafka.TopicMetadata)
-
-	receivedBytes = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "ccloud_metric_received_bytes",
-		Help: "The delta count of bytes received from the network. Each sample is the number of bytes received since the previous data sample. The count is sampled every 60 seconds.",
-	}, []string{"topic", "cluster"})
-	sentBytes = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "ccloud_metric_sent_bytes",
-		Help: "The delta count of bytes sent over the network. Each sample is the number of bytes sent since the previous data point. The count is sampled every 60 seconds.",
-	}, []string{"topic", "cluster"})
-	retainedBytes = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "ccloud_metric_retained_bytes",
-		Help: "The current count of bytes retained by the cluster, summed across all partitions. The count is sampled every 60 seconds.",
-	}, []string{"topic", "cluster"})
+	topicList    = make(map[string]*kafka.TopicMetadata)
+	gaugeMetrics = make(map[string]*prometheus.GaugeVec)
 )
 
 func RetrieveTopicListRoutine(adminClient *kafka.AdminClient) {
@@ -53,7 +41,7 @@ func RetrieveTopicListRoutine(adminClient *kafka.AdminClient) {
 	}(adminClient)
 }
 
-func handleResponseMetric(cluster string, response Response, vec *prometheus.GaugeVec) {
+func handleResponseMetric(cluster string, response QueryResponse, vec *prometheus.GaugeVec) {
 	exploredTopic := make(map[string]int)
 	for _, data := range response.Data {
 		_, exist := topicList[data.Topic]
@@ -72,17 +60,31 @@ func handleResponseMetric(cluster string, response Response, vec *prometheus.Gau
 	}
 }
 
+// Start a routine what will scrape the Confluent Cloud
+// Metrics every 15 seconds
 func FetchMetricsFromEndpointRoutine(cluster string) {
+	// Before starting the routing, invoking the descriptors endpoints
+	// to fetch the list of metric to scap
+	descriptorResponse := SendDescriptorQuery()
+	for _, metric := range descriptorResponse.Data {
+		if metric.Type == "GAUGE_INT64" {
+			gaugeMetrics[metric.Name] = promauto.NewGaugeVec(prometheus.GaugeOpts{
+				Name: "ccloud_metric_" + GetNiceNameForMetric(metric),
+				Help: metric.Description,
+			}, []string{"topic", "cluster"})
+		}
+	}
+
+	// Main routine scraping the Confluent Cloud API endpoint
 	go func() {
 		for {
-			sentBytesQuery, receivedBytesQuery, retainedBytesQuery := BuildQueries(cluster)
-			sentBytesResponse := SendQuery(sentBytesQuery)
-			receivedBytesResponse := SendQuery(receivedBytesQuery)
-			retainedBytesResponse := SendQuery(retainedBytesQuery)
-
-			handleResponseMetric(cluster, sentBytesResponse, sentBytes)
-			handleResponseMetric(cluster, receivedBytesResponse, receivedBytes)
-			handleResponseMetric(cluster, retainedBytesResponse, retainedBytes)
+			from := time.Now().Add(time.Minute * -5)
+			to := time.Now().Add(time.Minute)
+			for metric, gauge := range gaugeMetrics {
+				query := BuildQuery(metric, cluster, from, to)
+				response := SendQuery(query)
+				handleResponseMetric(cluster, response, gauge)
+			}
 
 			time.Sleep(time.Second * 15)
 		}
