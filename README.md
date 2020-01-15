@@ -1,8 +1,8 @@
 # Prometheus exporter for Confluent Cloud Metrics API
 
 A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
-By default, the scrapper will be exposing the metrics on [port 2112](http://localhost:2112)
-To use the scrapper, the following environment variables need to be specified:
+By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112)
+To use the exporter, the following environment variables need to be specified:
 
 * `CCLOUD_USER`: Your Confluent Cloud login
 * `CCLOUD_PASSWORD`: Your Confluent Cloud password
