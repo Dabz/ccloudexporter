@@ -47,7 +47,7 @@ type Filter struct {
 }
 
 // Response from the cloud endpoint
-type Response struct {
+type QueryResponse struct {
 	Data []Data `json:"data"`
 }
 
@@ -64,17 +64,7 @@ var (
 	}
 )
 
-func BuildQueries(cluster string) (sentBytes Query, receivedBytes Query, retainedBytes Query) {
-	from := time.Now().Add(time.Minute * -1)
-	to := time.Now().Add(time.Minute)
-
-	sentBytes = BuildQuery("io.confluent.kafka.server/sent_bytes/delta", cluster, from, to)
-	receivedBytes = BuildQuery("io.confluent.kafka.server/received_bytes/delta", cluster, from, to)
-	retainedBytes = BuildQuery("io.confluent.kafka.server/retained_bytes", cluster, from, to)
-
-	return
-}
-
+// Create a new Query for a metric for a specific cluster and time interval
 func BuildQuery(metric string, cluster string, timeFrom time.Time, timeTo time.Time) Query {
 	aggregation := Aggregation{
 		Agg:    "SUM",
@@ -97,12 +87,13 @@ func BuildQuery(metric string, cluster string, timeFrom time.Time, timeTo time.T
 		Filter:      filterHeader,
 		Granularity: "PT1M",
 		GroupBy:     []string{"metric.label.topic"},
-		Limit:       2,
+		Limit:       1000,
 		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), timeTo.Format(time.RFC3339))},
 	}
 }
 
-func SendQuery(query Query) Response {
+// Send Query to Confluent Cloud API metrics and wait for the response synchronously
+func SendQuery(query Query) QueryResponse {
 	user, present := os.LookupEnv("CCLOUD_USER")
 	if !present || user == "" {
 		fmt.Print("CCLOUD_USER environment variable has not been specified")
@@ -141,7 +132,7 @@ func SendQuery(query Query) Response {
 		panic(err)
 	}
 
-	response := Response{}
+	response := QueryResponse{}
 	json.Unmarshal(body, &response)
 
 	return response
