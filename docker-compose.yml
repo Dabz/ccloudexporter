@@ -17,5 +17,3 @@ services:
       CCLOUD_PASSWORD: ${CCLOUD_PASSWORD}
       CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
     command: ccloudexporter ${CCLOUD_CLUSTER}
-    ports:
-      - 2112:2112
