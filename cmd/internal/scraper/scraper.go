@@ -8,6 +8,7 @@
 package scraper
 
 import (
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"time"
@@ -32,8 +33,14 @@ func handleResponseMetric(cluster string, response QueryResponse, vec *prometheu
 	for topic := range topicList {
 		_, exist := exploredTopic[topic]
 		if !exist {
-			vec.With(prometheus.Labels{"topic": topic, "cluster": cluster}).Set(0.0)
+			vec.Delete(prometheus.Labels{"topic": topic, "cluster": cluster})
 		}
+	}
+}
+
+func handleEmptyResponseMetric(cluster string, vec *prometheus.GaugeVec) {
+	for topic := range topicList {
+		vec.Delete(prometheus.Labels{"topic": topic, "cluster": cluster})
 	}
 }
 
@@ -55,12 +62,17 @@ func FetchMetricsFromEndpointRoutine(cluster string) {
 	// Main routine scraping the Confluent Cloud API endpoint
 	go func() {
 		for {
-			from := time.Now().Add(time.Minute * - 3)
-			to := time.Now().Add(time.Minute * - 1)
+			from := time.Now().Add(time.Minute * -3)
+			to := time.Now().Add(time.Minute * -1)
 			for metric, gauge := range gaugeMetrics {
 				query := BuildQuery(metric, cluster, from, to)
-				response := SendQuery(query)
-				handleResponseMetric(cluster, response, gauge)
+				response, err := SendQuery(query)
+				if err != nil {
+					fmt.Println(err.Error())
+					handleEmptyResponseMetric(cluster, gauge)
+				} else {
+					handleResponseMetric(cluster, response, gauge)
+				}
 			}
 
 			time.Sleep(time.Second * 15)

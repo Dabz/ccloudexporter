@@ -11,6 +11,7 @@ import "time"
 import "fmt"
 import "bytes"
 import "os"
+import "errors"
 import "io/ioutil"
 import "encoding/json"
 import "net/http"
@@ -60,7 +61,7 @@ type Data struct {
 var (
 	endpoint   = "https://api.telemetry.confluent.cloud/v1/metrics/cloud/query"
 	httpClient = http.Client{
-		Timeout: time.Second * 6,
+		Timeout: time.Second * 30,
 	}
 )
 
@@ -93,7 +94,7 @@ func BuildQuery(metric string, cluster string, timeFrom time.Time, timeTo time.T
 }
 
 // Send Query to Confluent Cloud API metrics and wait for the response synchronously
-func SendQuery(query Query) QueryResponse {
+func SendQuery(query Query) (QueryResponse, error) {
 	user, present := os.LookupEnv("CCLOUD_USER")
 	if !present || user == "" {
 		fmt.Print("CCLOUD_USER environment variable has not been specified")
@@ -119,12 +120,13 @@ func SendQuery(query Query) QueryResponse {
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Printf(err.Error())
+		return QueryResponse{}, err
 	}
 
 	if res.StatusCode != 200 {
-		fmt.Printf("Received status code %d instead of 200", res.StatusCode)
-		os.Exit(1)
+		errorMsg := fmt.Sprintf("Received status code %d instead of 200", res.StatusCode)
+		return QueryResponse{}, errors.New(errorMsg)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -135,5 +137,5 @@ func SendQuery(query Query) QueryResponse {
 	response := QueryResponse{}
 	json.Unmarshal(body, &response)
 
-	return response
+	return response, nil
 }
