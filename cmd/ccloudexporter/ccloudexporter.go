@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"github.com/Dabz/ccloudexporter/cmd/internal/scraper"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"os"
@@ -22,7 +23,8 @@ func main() {
 	}
 
 	cluster := os.Args[1]
-	scraper.FetchMetricsFromEndpointRoutine(cluster)
+	collector := scraper.NewCCloudCollector(cluster)
+	prometheus.MustRegister(collector)
 
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Listening on http://localhost:2112/metrics")

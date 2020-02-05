@@ -53,9 +53,9 @@ type QueryResponse struct {
 }
 
 type Data struct {
-	Topic     string  `json:"metric.label.topic"`
-	Timestamp string  `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Topic     string    `json:"metric.label.topic"`
+	Timestamp time.Time `json:"timestamp"`
+	Value     float64   `json:"value"`
 }
 
 var (
