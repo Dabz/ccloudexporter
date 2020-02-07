@@ -1,11 +1,11 @@
+package collector
+
 //
 // query.go
 // Copyright (C) 2020 gaspar_d </var/spool/mail/gaspar_d>
 //
 // Distributed under terms of the MIT license.
 //
-
-package scraper
 
 import "time"
 import "fmt"
@@ -53,9 +53,9 @@ type QueryResponse struct {
 }
 
 type Data struct {
-	Topic     string  `json:"metric.label.topic"`
-	Timestamp string  `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Topic     string    `json:"metric.label.topic"`
+	Timestamp time.Time `json:"timestamp"`
+	Value     float64   `json:"value"`
 }
 
 var (
