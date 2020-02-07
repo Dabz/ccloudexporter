@@ -42,3 +42,6 @@ docker-compose up -d
 ```
 go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 ```
+
+## Grafana
+A simple Grafana dashboard is provided in [./grafana/](./grafana) folder.
