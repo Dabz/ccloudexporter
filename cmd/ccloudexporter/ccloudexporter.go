@@ -9,7 +9,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Dabz/ccloudexporter/cmd/internal/scraper"
+	"github.com/Dabz/ccloudexporter/cmd/internal/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	cluster := os.Args[1]
-	collector := scraper.NewCCloudCollector(cluster)
+	collector := collector.NewCCloudCollector(cluster)
 	prometheus.MustRegister(collector)
 
 	http.Handle("/metrics", promhttp.Handler())

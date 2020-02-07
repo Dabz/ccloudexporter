@@ -1,4 +1,4 @@
-package scraper
+package collector
 
 //
 // collector.go
@@ -28,7 +28,7 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
-	from := time.Now().Add(time.Minute * -3)
+	from := time.Now().Add(time.Minute * -2)
 	to := time.Now().Add(time.Minute * -1)
 	for metric, desc := range cc.metrics {
 		query := BuildQuery(metric.Name, cc.cluster, from, to)
@@ -45,8 +45,8 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 				dataPoint.Value,
 				cc.cluster, dataPoint.Topic,
 			)
-			metric = prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
-			ch <- metric
+			metricWithTls := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
+			ch <- metricWithTls
 		}
 	}
 }

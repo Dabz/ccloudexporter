@@ -1,11 +1,11 @@
+package collector
+
 //
 // query.go
 // Copyright (C) 2020 gaspar_d </var/spool/mail/gaspar_d>
 //
 // Distributed under terms of the MIT license.
 //
-
-package scraper
 
 import "time"
 import "fmt"
