@@ -43,7 +43,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 				desc,
 				prometheus.GaugeValue,
 				dataPoint.Value,
-				cc.cluster, dataPoint.Topic,
+				dataPoint.Topic, cc.cluster,
 			)
 			metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
 			ch <- metricWithTime
