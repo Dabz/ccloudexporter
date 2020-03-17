@@ -66,10 +66,10 @@ var (
 )
 
 // Create a new Query for a metric for a specific cluster and time interval
-func BuildQuery(metric string, cluster string, timeFrom time.Time, timeTo time.Time) Query {
+func BuildQuery(metric MetricDescription, cluster string, timeFrom time.Time, timeTo time.Time) Query {
 	aggregation := Aggregation{
 		Agg:    "SUM",
-		Metric: metric,
+		Metric: metric.Name,
 	}
 
 	filter := Filter{
@@ -83,11 +83,16 @@ func BuildQuery(metric string, cluster string, timeFrom time.Time, timeTo time.T
 		Filters: []Filter{filter},
 	}
 
+	groupBy := []string{}
+	if metric.hasLabel("topic") {
+		groupBy = []string{"metric.label.topic"}
+	}
+
 	return Query{
 		Aggreations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: "PT1M",
-		GroupBy:     []string{"metric.label.topic"},
+		GroupBy:     groupBy,
 		Limit:       1000,
 		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), timeTo.Format(time.RFC3339))},
 	}
