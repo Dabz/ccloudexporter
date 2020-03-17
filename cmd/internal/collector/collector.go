@@ -13,40 +13,67 @@ import (
 	"time"
 )
 
+type CCloudCollectorMetric struct {
+	metric MetricDescription
+	desc   *prometheus.Desc
+}
+
 type CCloudCollector struct {
 	userName  string
 	password  string
 	cluster   string
 	topicList map[string]*string
-	metrics   map[MetricDescription]*prometheus.Desc
+	metrics   []CCloudCollectorMetric
 }
 
 func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, desc := range cc.metrics {
-		ch <- desc
+		ch <- desc.desc
 	}
 }
 
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	from := time.Now().Add(time.Minute * -2)
 	to := time.Now().Add(time.Minute * -1)
-	for metric, desc := range cc.metrics {
-		query := BuildQuery(metric.Name, cc.cluster, from, to)
+	for _, pair := range cc.metrics {
+		desc := pair.desc
+		query := BuildQuery(pair.metric, cc.cluster, from, to)
 		response, err := SendQuery(query)
 		if err != nil {
 			fmt.Println(err.Error())
 			break
 		}
 
+		set := make(map[string]struct{}, len(response.Data))
 		for _, dataPoint := range response.Data {
-			metric := prometheus.MustNewConstMetric(
-				desc,
-				prometheus.GaugeValue,
-				dataPoint.Value,
-				dataPoint.Topic, cc.cluster,
-			)
-			metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
-			ch <- metricWithTime
+			var metric prometheus.Metric
+			if pair.metric.hasLabel("topic") {
+				metric = prometheus.MustNewConstMetric(
+					desc,
+					prometheus.GaugeValue,
+					dataPoint.Value,
+					dataPoint.Topic, cc.cluster,
+				)
+
+				_, ok := set[dataPoint.Topic]
+				if ok {
+					continue
+				}
+				set[dataPoint.Topic] = struct{}{}
+				metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
+				ch <- metricWithTime
+
+			} else {
+				metric = prometheus.MustNewConstMetric(
+					desc,
+					prometheus.GaugeValue,
+					dataPoint.Value,
+					cc.cluster,
+				)
+				metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
+				ch <- metricWithTime
+				break
+			}
 		}
 	}
 }
@@ -54,15 +81,25 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 func NewCCloudCollector(cluster string) CCloudCollector {
 	collector := CCloudCollector{cluster: cluster}
 	descriptorResponse := SendDescriptorQuery()
-	collector.metrics = make(map[MetricDescription]*prometheus.Desc)
-	for _, metric := range descriptorResponse.Data {
+	for _, metr := range descriptorResponse.Data {
+		var labels []string
+		if metr.hasLabel("topic") {
+			labels = []string{"topic", "cluster"}
+		} else {
+			labels = []string{"cluster"}
+		}
 		desc := prometheus.NewDesc(
-			"ccloud_metric_"+GetNiceNameForMetric(metric),
-			metric.Description,
-			[]string{"topic", "cluster"},
+			"ccloud_metric_"+GetNiceNameForMetric(metr),
+			metr.Description,
+			labels,
 			nil,
 		)
-		collector.metrics[metric] = desc
+
+		metric := CCloudCollectorMetric{
+			metric: metr,
+			desc:   desc,
+		}
+		collector.metrics = append(collector.metrics, metric)
 	}
 	return collector
 }
