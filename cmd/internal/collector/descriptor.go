@@ -48,7 +48,7 @@ var (
 		"io.confluent.kafka.server": "",
 		"delta":                     "",
 	}
-	descriptorEndpoint = "https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors"
+	descriptorUri = "/v1/metrics/cloud/descriptors"
 )
 
 // Return true if the metric has this label
@@ -88,7 +88,8 @@ func SendDescriptorQuery() DescriptorResponse {
 		os.Exit(1)
 	}
 
-	req, err := http.NewRequest("GET", descriptorEndpoint, nil)
+	endpoint := HttpBaseUrl + descriptorUri
+	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		panic(err)
 	}
