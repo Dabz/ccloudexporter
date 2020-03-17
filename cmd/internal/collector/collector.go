@@ -10,6 +10,7 @@ package collector
 import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
+	"net/http"
 	"time"
 )
 
@@ -31,6 +32,10 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 		ch <- desc.desc
 	}
 }
+
+var (
+	httpClient http.Client
+)
 
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	from := time.Now().Add(time.Minute * -2)
@@ -78,8 +83,8 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
-func NewCCloudCollector(cluster string) CCloudCollector {
-	collector := CCloudCollector{cluster: cluster}
+func NewCCloudCollector() CCloudCollector {
+	collector := CCloudCollector{cluster: Cluster}
 	descriptorResponse := SendDescriptorQuery()
 	for _, metr := range descriptorResponse.Data {
 		var labels []string
@@ -100,6 +105,10 @@ func NewCCloudCollector(cluster string) CCloudCollector {
 			desc:   desc,
 		}
 		collector.metrics = append(collector.metrics, metric)
+	}
+
+	httpClient = http.Client{
+		Timeout: time.Second * time.Duration(HttpTimeout),
 	}
 	return collector
 }

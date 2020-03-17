@@ -11,7 +11,7 @@ To use the exporter, the following environment variables need to be specified:
 
 ## Usage
 ```
-./ccloudexporter <cluster_id> [kafka client configuration]
+./ccloudexporter -cluster <cluster_id>
 ````
 
 ## Examples
@@ -22,12 +22,12 @@ go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 go install github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 export CCLOUD_USER=toto@confluent.io
 export CCLOUD_PASSWORD=totopassword
-./ccloudexporter lkc-abc123  
+./ccloudexporter -cluster lkc-abc123  
 ```
 
 ### Using docker
 ```
-docker run -e CCLOUD_USER=$CCLOUD_USER -e CCLOUD_PASSWORD=$CCLOUD_PASSWORD dabz/ccloudexporter:latest ccloudexporter lkc-abc123
+docker run -e CCLOUD_USER=$CCLOUD_USER -e CCLOUD_PASSWORD=$CCLOUD_PASSWORD dabz/ccloudexporter:latest ccloudexporter -cluster lkc-abc123
 ```
 
 ### Using docker-compose

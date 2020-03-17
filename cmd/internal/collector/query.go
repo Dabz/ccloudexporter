@@ -59,10 +59,7 @@ type Data struct {
 }
 
 var (
-	endpoint   = "https://api.telemetry.confluent.cloud/v1/metrics/cloud/query"
-	httpClient = http.Client{
-		Timeout: time.Second * 30,
-	}
+	queryUri = "/v1/metrics/cloud/query"
 )
 
 // Create a new Query for a metric for a specific cluster and time interval
@@ -115,6 +112,7 @@ func SendQuery(query Query) (QueryResponse, error) {
 	if err != nil {
 		panic(err)
 	}
+	endpoint := HttpBaseUrl + queryUri
 	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonQuery))
 	if err != nil {
 		panic(err)
