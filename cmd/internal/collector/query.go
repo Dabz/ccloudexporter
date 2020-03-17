@@ -125,7 +125,7 @@ func SendQuery(query Query) (QueryResponse, error) {
 	}
 
 	if res.StatusCode != 200 {
-		errorMsg := fmt.Sprintf("Received status code %d instead of 200", res.StatusCode)
+		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for POST on %s with %s", res.StatusCode, endpoint, jsonQuery)
 		return QueryResponse{}, errors.New(errorMsg)
 	}
 
