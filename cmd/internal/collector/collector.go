@@ -15,8 +15,9 @@ import (
 )
 
 type CCloudCollectorMetric struct {
-	metric MetricDescription
-	desc   *prometheus.Desc
+	metric   MetricDescription
+	desc     *prometheus.Desc
+	duration prometheus.Summary
 }
 
 type CCloudCollector struct {
@@ -40,10 +41,13 @@ var (
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	from := time.Now().Add(time.Minute * -2)
 	to := time.Now().Add(time.Minute * -1)
-	for _, pair := range cc.metrics {
-		desc := pair.desc
-		query := BuildQuery(pair.metric, cc.cluster, from, to)
+	for _, ccmetric := range cc.metrics {
+		desc := ccmetric.desc
+		query := BuildQuery(ccmetric.metric, cc.cluster, from, to)
+		timer := prometheus.NewTimer(ccmetric.duration)
 		response, err := SendQuery(query)
+		timer.ObserveDuration()
+		ch <- ccmetric.duration
 		if err != nil {
 			fmt.Println(err.Error())
 			break
@@ -52,7 +56,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 		set := make(map[string]struct{}, len(response.Data))
 		for _, dataPoint := range response.Data {
 			var metric prometheus.Metric
-			if pair.metric.hasLabel("topic") {
+			if ccmetric.metric.hasLabel("topic") {
 				metric = prometheus.MustNewConstMetric(
 					desc,
 					prometheus.GaugeValue,
@@ -100,9 +104,17 @@ func NewCCloudCollector() CCloudCollector {
 			nil,
 		)
 
+		requestDuration := prometheus.NewSummary(prometheus.SummaryOpts{
+			Help:        "Metrics API request latency",
+			Name:        "ccloud_metrics_api_request_latency",
+			ConstLabels: map[string]string{"metric": metr.Name},
+			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		})
+
 		metric := CCloudCollectorMetric{
-			metric: metr,
-			desc:   desc,
+			metric:   metr,
+			desc:     desc,
+			duration: requestDuration,
 		}
 		collector.metrics = append(collector.metrics, metric)
 	}
@@ -110,5 +122,6 @@ func NewCCloudCollector() CCloudCollector {
 	httpClient = http.Client{
 		Timeout: time.Second * time.Duration(HttpTimeout),
 	}
+
 	return collector
 }
