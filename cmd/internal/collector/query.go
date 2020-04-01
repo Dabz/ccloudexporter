@@ -15,6 +15,7 @@ import "errors"
 import "io/ioutil"
 import "encoding/json"
 import "net/http"
+import "reflect"
 
 // Query to Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -53,9 +54,11 @@ type QueryResponse struct {
 }
 
 type Data struct {
-	Topic     string    `json:"metric.label.topic"`
-	Timestamp time.Time `json:"timestamp"`
-	Value     float64   `json:"value"`
+	Topic      string    `json:"metric.label.topic"`
+	Cluster_id string    `json:"metric.label.cluster_id"`
+	Type       string    `json:"metric.label.type"`
+	Timestamp  time.Time `json:"timestamp"`
+	Value      float64   `json:"value"`
 }
 
 var (
@@ -82,7 +85,15 @@ func BuildQuery(metric MetricDescription, cluster string, timeFrom time.Time, ti
 
 	groupBy := []string{}
 	if metric.hasLabel("topic") {
-		groupBy = []string{"metric.label.topic"}
+		groupBy = append(groupBy, "metric.label.topic")
+	}
+
+	if metric.hasLabel("type") {
+		groupBy = append(groupBy, "metric.label.type")
+	}
+
+	if metric.hasLabel("cluster_id") {
+		groupBy = append(groupBy, "metric.label.cluster_id")
 	}
 
 	return Query{
@@ -141,4 +152,10 @@ func SendQuery(query Query) (QueryResponse, error) {
 	json.Unmarshal(body, &response)
 
 	return response, nil
+}
+
+func getField(v *Data, field string) string {
+	r := reflect.ValueOf(v)
+	f := reflect.Indirect(r).FieldByName(field)
+	return string(f.String())
 }
