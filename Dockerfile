@@ -9,4 +9,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/ccloudexporter ./ccloudexporter
 FROM scratch
 ADD docker/telemetry-confluent-cloud-chain.pem /etc/ssl/certs/
 COPY --from=builder /go/bin/ccloudexporter /go/bin/ccloudexporter
+ENV PATH="/go/bin/:${PATH}"
 CMD ["/go/bin/ccloudexporter"]
