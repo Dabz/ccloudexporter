@@ -4,8 +4,8 @@ A simple prometheus exporter that can be used to extract metrics from [Confluent
 By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112)
 To use the exporter, the following environment variables need to be specified:
 
-* `CCLOUD_USER`: Your Confluent Cloud login
-* `CCLOUD_PASSWORD`: Your Confluent Cloud password
+* `CCLOUD_USER`: Your Confluent Cloud login, or the API Key created with `ccloud api-key create --resource cloud`
+* `CCLOUD_PASSWORD`: Your Confluent Cloud password, or the API Key Secret when created with `ccloud api-key create --resource cloud`
 
 `CCLOUD_USER` and `CCLOUD_PASSWORD` environment variables will be used to invoke the https://api.telemetry.confluent.cloud endpoint.
 
