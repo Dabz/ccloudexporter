@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -47,21 +46,19 @@ var (
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	var wg sync.WaitGroup
-	from := time.Now().Add(time.Minute * -2) // the last minute might contains data that is not yet finalized
-	to := time.Now().Add(time.Minute * -1)   // in order to avoid fetching intermediate data, we always fetch current time - 1
 	for _, ccmetric := range cc.metrics {
 		wg.Add(1)
-		go cc.CollectMetric(&wg, ch, ccmetric, from, to)
+		go cc.CollectMetric(&wg, ch, ccmetric)
 	}
 	wg.Wait()
 }
 
 // Collecting a specific metric for a time window
-func (cc CCloudCollector) CollectMetric(wg *sync.WaitGroup, ch chan<- prometheus.Metric, ccmetric CCloudCollectorMetric, from time.Time, to time.Time) {
+func (cc CCloudCollector) CollectMetric(wg *sync.WaitGroup, ch chan<- prometheus.Metric, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
 
 	desc := ccmetric.desc
-	query := BuildQuery(ccmetric.metric, cc.cluster, from, to)
+	query := BuildQuery(ccmetric.metric, cc.cluster)
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(ccmetric.duration.Set))
 	response, err := SendQuery(query)
 	timer.ObserveDuration()
@@ -72,20 +69,35 @@ func (cc CCloudCollector) CollectMetric(wg *sync.WaitGroup, ch chan<- prometheus
 	}
 
 	for _, dataPoint := range response.Data {
+		value, ok := dataPoint["value"].(float64)
+		if !ok {
+			fmt.Println(err.Error())
+			return
+		}
+
 		labels := []string{}
 		for _, label := range ccmetric.labels {
-			labels = append(labels, getField(&dataPoint, strings.Title(strings.ToLower(label))))
+			labels = append(labels, fmt.Sprint(dataPoint["metric.label."+label]))
 		}
 
 		metric := prometheus.MustNewConstMetric(
 			desc,
 			prometheus.GaugeValue,
-			dataPoint.Value,
+			value,
 			labels...,
 		)
 
-		metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
-		ch <- metricWithTime
+		if NoTimestamp {
+			ch <- metric
+		} else {
+			timestamp, err := time.Parse(time.RFC3339, fmt.Sprint(dataPoint["timestamp"]))
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			metricWithTime := prometheus.NewMetricWithTimestamp(timestamp, metric)
+			ch <- metricWithTime
+		}
 	}
 }
 

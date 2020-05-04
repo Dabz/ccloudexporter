@@ -15,7 +15,6 @@ import "errors"
 import "io/ioutil"
 import "encoding/json"
 import "net/http"
-import "reflect"
 
 // Query to Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -50,23 +49,28 @@ type Filter struct {
 
 // Response from the cloud endpoint
 type QueryResponse struct {
-	Data []Data `json:"data"`
+	Data []map[string]interface{} `json:"data"`
 }
 
-type Data struct {
-	Topic      string    `json:"metric.label.topic"`
-	Cluster_id string    `json:"metric.label.cluster_id"`
-	Type       string    `json:"metric.label.type"`
-	Timestamp  time.Time `json:"timestamp"`
-	Value      float64   `json:"value"`
-}
+// Actual data point from the query response
+// Only there for reference
+// type Data struct {
+// 	Topic      string    `json:"metric.label.topic"`
+// 	Cluster_id string    `json:"metric.label.cluster_id"`
+// 	Type       string    `json:"metric.label.type"`
+// 	Partition  string    `json:"metric.label.partition"`
+// 	Timestamp  time.Time `json:"timestamp"`
+// 	Value      float64   `json:"value"`
+// }
 
 var (
 	queryUri = "/v1/metrics/cloud/query"
 )
 
 // Create a new Query for a metric for a specific cluster and time interval
-func BuildQuery(metric MetricDescription, cluster string, timeFrom time.Time, timeTo time.Time) Query {
+func BuildQuery(metric MetricDescription, cluster string) Query {
+	timeFrom := time.Now().Add(time.Duration(Delay*-1) * time.Second) // the last minute might contains data that is not yet finalized
+
 	aggregation := Aggregation{
 		Agg:    "SUM",
 		Metric: metric.Name,
@@ -84,25 +88,17 @@ func BuildQuery(metric MetricDescription, cluster string, timeFrom time.Time, ti
 	}
 
 	groupBy := []string{}
-	if metric.hasLabel("topic") {
-		groupBy = append(groupBy, "metric.label.topic")
-	}
-
-	if metric.hasLabel("type") {
-		groupBy = append(groupBy, "metric.label.type")
-	}
-
-	if metric.hasLabel("cluster_id") {
-		groupBy = append(groupBy, "metric.label.cluster_id")
+	for _, label := range metric.Labels {
+		groupBy = append(groupBy, "metric.label."+label.Key)
 	}
 
 	return Query{
 		Aggreations: []Aggregation{aggregation},
 		Filter:      filterHeader,
-		Granularity: "PT1M",
+		Granularity: Granularity,
 		GroupBy:     groupBy,
 		Limit:       1000,
-		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), timeTo.Format(time.RFC3339))},
+		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Granularity)},
 	}
 }
 
@@ -152,10 +148,4 @@ func SendQuery(query Query) (QueryResponse, error) {
 	json.Unmarshal(body, &response)
 
 	return response, nil
-}
-
-func getField(v *Data, field string) string {
-	r := reflect.ValueOf(v)
-	f := reflect.Indirect(r).FieldByName(field)
-	return string(f.String())
 }
