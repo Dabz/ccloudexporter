@@ -14,6 +14,24 @@ To use the exporter, the following environment variables need to be specified:
 ./ccloudexporter -cluster <cluster_id>
 ````
 
+### Options
+
+```
+Usage of ./ccloudexporter:
+  -cluster string
+    	Cluster ID to fetch metric for (e.g. lkc-xxxxx)
+  -delay int
+    	Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
+  -endpoint string
+    	Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
+  -granularity string
+    	Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+  -no-timestamp
+    	Do not propagate the timestamp from the the metrics API to prometheus
+  -timeout int
+    	Timeout, in second, to use for all REST call with the Metric API (default 60)
+```
+
 ## Examples
 
 ### Building and executing
