@@ -19,7 +19,9 @@ To use the exporter, the following environment variables need to be specified:
 ```
 Usage of ./ccloudexporter:
   -cluster string
-    	Cluster ID to fetch metric for (e.g. lkc-xxxxx)
+    	Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
+  -listener string
+    	Listener for the HTTP interface (default ":2112")
   -delay int
     	Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
   -endpoint string
@@ -66,4 +68,6 @@ go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 ```
 
 ## Grafana
-A simple Grafana dashboard is provided in [./grafana/](./grafana) folder.
+A Grafana dashboard is provided in [./grafana/](./grafana) folder.
+
+![Grafana Screenshot](./grafana/grafana.png)

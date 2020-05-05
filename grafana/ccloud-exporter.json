@@ -52,7 +52,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1588607648030,
+  "iteration": 1588670827522,
   "links": [],
   "panels": [
     {
@@ -120,7 +120,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_received_bytes{topic=~\"$topic\"})",
+          "expr": "sum(ccloud_metric_received_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -182,7 +182,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\"})",
+          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -244,7 +244,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\"})",
+          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster}}",
@@ -308,7 +308,8 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_received_bytes)",
+          "expr": "sum(ccloud_metric_received_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
+          "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
         }
@@ -369,7 +370,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\"})",
+          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -431,7 +432,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\"})",
+          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster}}",
@@ -495,7 +496,7 @@
       "pluginVersion": "6.7.3",
       "targets": [
         {
-          "expr": "avg(ccloud_metric_active_connection_count)",
+          "expr": "avg(ccloud_metric_active_connection_count{cluster_id=~\"$cluster\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster}}",
@@ -626,7 +627,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "ccloud_metric_received_bytes{topic=~\"$topic\"}",
+          "expr": "ccloud_metric_received_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{topic}} - {{cluster_id}}",
@@ -719,7 +720,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "ccloud_metric_sent_bytes{topic=~\"$topic\"}",
+          "expr": "ccloud_metric_sent_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{topic}} - {{cluster_id}}",
@@ -813,7 +814,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (cluster_id, topic) (ccloud_metric_retained_bytes{topic=~\"$topic\"})",
+          "expr": "sum by (cluster_id, topic) (ccloud_metric_retained_bytes{topic=~\"$topic\", cluster_id=~\"$cluster\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster_id}}-{{topic}}",
@@ -908,7 +909,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "ccloud_metric_request_count",
+          "expr": "ccloud_metric_request_count{cluster_id=~\"$cluster\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster_id}}-{{type}}",
@@ -1245,6 +1246,29 @@
         "allValue": "",
         "current": {},
         "datasource": "${DS_PROMETHEUS-1}",
+        "definition": "label_values(ccloud_metric_retained_bytes, cluster_id)",
+        "hide": 0,
+        "includeAll": true,
+        "index": -1,
+        "label": "Cluster",
+        "multi": true,
+        "name": "cluster",
+        "options": [],
+        "query": "label_values(ccloud_metric_retained_bytes, cluster_id)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": "${DS_PROMETHEUS-1}",
         "definition": "label_values(ccloud_metric_retained_bytes, topic)",
         "hide": 0,
         "includeAll": true,
@@ -1290,5 +1314,5 @@
   "variables": {
     "list": []
   },
-  "version": 3
+  "version": 7
 }
