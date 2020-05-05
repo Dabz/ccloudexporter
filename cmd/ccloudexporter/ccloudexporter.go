@@ -18,12 +18,12 @@ import (
 func main() {
 	collector.ParseOption()
 
-	collector := collector.NewCCloudCollector()
-	prometheus.MustRegister(collector)
+	ccollector := collector.NewCCloudCollector()
+	prometheus.MustRegister(ccollector)
 
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Listening on http://localhost:2112/metrics")
-	err := http.ListenAndServe(":2112", nil)
+	fmt.Printf("Listening on http://%s/metrics\n", collector.Listener)
+	err := http.ListenAndServe(collector.Listener, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -18,6 +18,7 @@ var (
 	Delay       int
 	Granularity string
 	NoTimestamp bool
+	Listener    string
 )
 
 var supportedGranularity = []string{"PT1M", "PT5M", "PT15M", "PT30M", "PT1H"}
@@ -27,13 +28,17 @@ func ParseOption() {
 	flag.StringVar(&HttpBaseUrl, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
 	flag.StringVar(&Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
 	flag.IntVar(&Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
-	flag.StringVar(&Cluster, "cluster", "", "Cluster ID to fetch metric for (e.g. lkc-xxxxx)")
+	flag.StringVar(&Cluster, "cluster", "", "Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
+	flag.StringVar(&Listener, "listener", ":2112", "Listener for the HTTP interface")
 	flag.BoolVar(&NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
 
 	flag.Parse()
 
 	if Cluster == "" {
-		Cluster = flag.Arg(0)
+		clusterEnv, present := os.LookupEnv("CCLOUD_CLUSTER")
+		if present {
+			Cluster = clusterEnv
+		}
 	}
 
 	if Cluster == "" {
