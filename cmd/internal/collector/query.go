@@ -87,10 +87,13 @@ func BuildQuery(metric MetricDescription, cluster string) Query {
 		Filters: []Filter{filter},
 	}
 
-	groupBy := []string{}
-	for _, label := range metric.Labels {
-		groupBy = append(groupBy, "metric.label."+label.Key)
-	}
+        groupBy := []string{}
+        for _, label := range metric.Labels {
+                if label.Key == "partition" {
+                        continue
+                }   
+                groupBy = append(groupBy, "metric.label."+label.Key)
+        }
 
 	return Query{
 		Aggreations: []Aggregation{aggregation},
