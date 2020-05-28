@@ -1,3 +1,12 @@
+# Important information
+
+[Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html) will soon restrict the usage of grouping per partition.
+This change might break previous versions of ccloudexporter as they group all metrics per partition.
+Pull Request [#11](https://github.com/Dabz/ccloudexporter/pull/33) fixed this issue by removing the grouping per partition.
+
+We highly recommend upgrading to the latest version of ccloudexporter to avoid being impacted by this change.
+If you need partition granularity, we are working on a way to specify a whitelist of topics for which to expose metrics at the partition granularity.
+
 # Prometheus exporter for Confluent Cloud Metrics API
 
 A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
