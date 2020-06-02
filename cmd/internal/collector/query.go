@@ -42,12 +42,13 @@ type FilterHeader struct {
 
 // Filter structure
 type Filter struct {
-	Field string `json:"field"`
-	Op    string `json:"op"`
-	Value string `json:"value"`
+	Field   string   `json:"field,omitempty"`
+	Op      string   `json:"op"`
+	Value   string   `json:"value,omitempty"`
+	Filters []Filter `json:"filters,omitempty"`
 }
 
-// Response from the cloud endpoint
+// QueryResponse from the cloud endpoint
 type QueryResponse struct {
 	Data []map[string]interface{} `json:"data"`
 }
@@ -64,48 +65,73 @@ type QueryResponse struct {
 // }
 
 var (
-	queryUri = "/v1/metrics/cloud/query"
+	queryURI = "/v1/metrics/cloud/query"
 )
 
-// Create a new Query for a metric for a specific cluster and time interval
-func BuildQuery(metric MetricDescription, cluster string) Query {
-	timeFrom := time.Now().Add(time.Duration(Delay*-1) * time.Second) // the last minute might contains data that is not yet finalized
+// BuildQuery creates a new Query for a metric for a specific cluster and time interval
+// This function will return the main global query, override queries will not be generated
+func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string) Query {
+	timeFrom := time.Now().Add(time.Duration(Context.Delay*-1) * time.Second) // the last minute might contains data that is not yet finalized
 
 	aggregation := Aggregation{
 		Agg:    "SUM",
 		Metric: metric.Name,
 	}
 
-	filter := Filter{
-		Field: "metric.label.cluster_id",
-		Op:    "EQ",
-		Value: cluster,
+	filters := make([]Filter, 0)
+
+	clusterFilters := make([]Filter, 0)
+	for _, cluster := range clusters {
+		clusterFilters = append(clusterFilters, Filter{
+			Field: "metric.label.cluster_id",
+			Op:    "EQ",
+			Value: cluster,
+		})
+	}
+
+	filters = append(filters, Filter{
+		Op:      "OR",
+		Filters: clusterFilters,
+	})
+
+	topicFilters := make([]Filter, 0)
+	for _, topic := range topicFiltering {
+		topicFilters = append(topicFilters, Filter{
+			Field: "metric.label.topic",
+			Op:    "EQ",
+			Value: topic,
+		})
+	}
+	if len(topicFilters) > 0 {
+		filters = append(filters, Filter{
+			Op:      "OR",
+			Filters: topicFilters,
+		})
 	}
 
 	filterHeader := FilterHeader{
 		Op:      "AND",
-		Filters: []Filter{filter},
+		Filters: filters,
 	}
 
 	groupBy := []string{}
 	for _, label := range metric.Labels {
-		if label.Key == "partition" {
-			continue
+		if contains(groupByLabels, label.Key) {
+			groupBy = append(groupBy, "metric.label."+label.Key)
 		}
-		groupBy = append(groupBy, "metric.label."+label.Key)
 	}
 
 	return Query{
 		Aggreations: []Aggregation{aggregation},
 		Filter:      filterHeader,
-		Granularity: Granularity,
+		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
 		Limit:       1000,
-		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Granularity)},
+		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
 	}
 }
 
-// Send Query to Confluent Cloud API metrics and wait for the response synchronously
+// SendQuery sends a query to Confluent Cloud API metrics and wait for the response synchronously
 func SendQuery(query Query) (QueryResponse, error) {
 	user, present := os.LookupEnv("CCLOUD_USER")
 	if !present || user == "" {
@@ -122,7 +148,7 @@ func SendQuery(query Query) (QueryResponse, error) {
 	if err != nil {
 		panic(err)
 	}
-	endpoint := HttpBaseUrl + queryUri
+	endpoint := Context.HTTPBaseURL + queryURI
 	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonQuery))
 	if err != nil {
 		panic(err)
@@ -130,6 +156,8 @@ func SendQuery(query Query) (QueryResponse, error) {
 
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("User-Agent", "ccloudexporter/"+Version)
+	req.Header.Add("Correlation-Contex", "service.name=ccloudexporter,service.version=" +Version)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -144,7 +172,8 @@ func SendQuery(query Query) (QueryResponse, error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		panic(err)
+		fmt.Printf(err.Error())
+		return QueryResponse{}, err
 	}
 
 	response := QueryResponse{}

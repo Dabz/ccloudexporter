@@ -22,8 +22,8 @@ func main() {
 	prometheus.MustRegister(ccollector)
 
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Printf("Listening on http://%s/metrics\n", collector.Listener)
-	err := http.ListenAndServe(collector.Listener, nil)
+	fmt.Printf("Listening on http://%s/metrics\n", collector.Context.Listener)
+	err := http.ListenAndServe(collector.Context.Listener, nil)
 	if err != nil {
 		panic(err)
 	}
