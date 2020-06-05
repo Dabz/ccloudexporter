@@ -15,14 +15,14 @@ import "net/http"
 import "encoding/json"
 import "io/ioutil"
 
-// Response from Confluent Cloud API metric endpoint
+// DescriptorResponse is the response from Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
 // https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors
 type DescriptorResponse struct {
 	Data []MetricDescription `json:"data"`
 }
 
-// Metric from the  https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors
+// MetricDescription is the metric from the https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors
 // response
 type MetricDescription struct {
 	Name        string        `json:"name"`
@@ -32,7 +32,7 @@ type MetricDescription struct {
 	Labels      []MetricLabel `json:"labels"`
 }
 
-// Label of a metric, should contain a key and a description
+// MetricLabel is the label of a metric, should contain a key and a description
 // e.g.
 //  {
 //      "description": "Name of the Kafka topic",
@@ -48,7 +48,7 @@ var (
 		"io.confluent.kafka.server": "",
 		"delta":                     "",
 	}
-	descriptorUri = "/v1/metrics/cloud/descriptors"
+	descriptorURI = "/v1/metrics/cloud/descriptors"
 )
 
 // Return true if the metric has this label
@@ -61,7 +61,7 @@ func (metric MetricDescription) hasLabel(label string) bool {
 	return false
 }
 
-// Return a human friendly metric name from a Confluent Cloud API metric
+// GetNiceNameForMetric returns a human friendly metric name from a Confluent Cloud API metric
 func GetNiceNameForMetric(metric MetricDescription) string {
 	splits := strings.Split(metric.Name, "/")
 	for _, split := range splits {
@@ -74,7 +74,7 @@ func GetNiceNameForMetric(metric MetricDescription) string {
 	panic(errors.New("Invalid metric: " + metric.Name))
 }
 
-// Call the https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors endpoint
+// SendDescriptorQuery calls the https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors endpoint
 // to retrieve the list of metrics
 func SendDescriptorQuery() DescriptorResponse {
 	user, present := os.LookupEnv("CCLOUD_USER")
@@ -88,7 +88,7 @@ func SendDescriptorQuery() DescriptorResponse {
 		os.Exit(1)
 	}
 
-	endpoint := HttpBaseUrl + descriptorUri
+	endpoint := Context.HTTPBaseURL + descriptorURI
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		panic(err)
@@ -96,6 +96,8 @@ func SendDescriptorQuery() DescriptorResponse {
 
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("User-Agent", "ccloudexporter/"+Version)
+	req.Header.Add("Correlation-Contex", "service.name=ccloudexporter,service.version=" +Version)
 
 	res, err := httpClient.Do(req)
 	if err != nil {

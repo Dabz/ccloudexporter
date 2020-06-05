@@ -10,48 +10,140 @@ package collector
 import "flag"
 import "fmt"
 import "os"
-
-var (
-	HttpTimeout int
-	HttpBaseUrl string
-	Cluster     string
-	Delay       int
-	Granularity string
-	NoTimestamp bool
-	Listener    string
-)
+import "github.com/spf13/viper"
 
 var supportedGranularity = []string{"PT1M", "PT5M", "PT15M", "PT30M", "PT1H"}
 
+// ParseOption parses options provided by the CLI and the configuration file
+// This function will panic if the options are invalid
 func ParseOption() {
-	flag.IntVar(&HttpTimeout, "timeout", 60, "Timeout, in second, to use for all REST call with the Metric API")
-	flag.StringVar(&HttpBaseUrl, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
-	flag.StringVar(&Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
-	flag.IntVar(&Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
-	flag.StringVar(&Cluster, "cluster", "", "Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
-	flag.StringVar(&Listener, "listener", ":2112", "Listener for the HTTP interface")
-	flag.BoolVar(&NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
+	var cluster string
+	var configPath string
+
+	flag.StringVar(&configPath, "config", "", "Path to configuration file used to override default behavior of ccloudexporter")
+	flag.IntVar(&Context.HTTPTimeout, "timeout", 60, "Timeout, in second, to use for all REST call with the Metric API")
+	flag.StringVar(&Context.HTTPBaseURL, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
+	flag.StringVar(&Context.Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
+	flag.IntVar(&Context.Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
+	flag.StringVar(&cluster, "cluster", "", "Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
+	flag.StringVar(&Context.Listener, "listener", ":2112", "Listener for the HTTP interface")
+	flag.BoolVar(&Context.NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
+	versionFlag := flag.Bool("version", false, "Print the current version and exit")
 
 	flag.Parse()
 
-	if Cluster == "" {
+	if *versionFlag {
+		printVersion()
+		os.Exit(0)
+	}
+
+	if cluster == "" {
 		clusterEnv, present := os.LookupEnv("CCLOUD_CLUSTER")
 		if present {
-			Cluster = clusterEnv
+			cluster = clusterEnv
 		}
 	}
 
-	if Cluster == "" {
-		fmt.Println("No cluster ID has been specified")
-		flag.Usage()
+	if configPath != "" {
+		parseConfigFile(configPath)
+	} else {
+		createDefaultRule(cluster)
+	}
+	validateConfiguration()
+}
+
+func validateConfiguration() {
+
+	if !contains(supportedGranularity, Context.Granularity) {
+		fmt.Printf("Granularity %s is invalid \n", Context.Granularity)
 		os.Exit(1)
 	}
 
-	if !contains(supportedGranularity, Granularity) {
-		fmt.Printf("Granularity %s is invalid \n", Granularity)
-		os.Exit(1)
+	for _, rule := range Context.Rules {
+		if len(rule.Clusters) == 0 {
+			fmt.Println("No cluster ID has been specified in a rule")
+			flag.Usage()
+			os.Exit(1)
+		}
+
+		if contains(rule.GroupByLabels, "partition") && len(rule.Topics) == 0 {
+			fmt.Println("Topic filtering is required while grouping per partition")
+			os.Exit(1)
+		}
+
+		if len(rule.Topics) > 100 {
+			fmt.Println("A rule can not have more than 100 topics")
+			fmt.Println("Note: Dispatching your topics over multiple rule should fix this issue")
+			os.Exit(1)
+		}
+
+		if len(rule.GroupByLabels) == 0 {
+			fmt.Println("Labels is required while defining a rule")
+			os.Exit(1)
+		}
+	}
+}
+
+func parseConfigFile(configPath string) {
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(configPath)
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		fmt.Println("Can not read configuration file")
+		panic(err)
 	}
 
+	setIntIfExit(&Context.Delay, "config.delay")
+	setStringIfExit(&Context.Granularity, "config.granularity")
+	setStringIfExit(&Context.Listener, "config.listener")
+	setStringIfExit(&Context.HTTPBaseURL, "config.http.baseUrl")
+	setIntIfExit(&Context.HTTPTimeout, "config.http.timeout")
+	setBoolIfExist(&Context.NoTimestamp, "config.noTimestamp")
+
+	viper.UnmarshalKey("rules", &Context.Rules)
+	for i, rule := range Context.Rules {
+		rule.id = i
+		Context.Rules[i] = rule
+	}
+}
+
+func createDefaultRule(cluster string) {
+	Context.Rules = make([]Rule, 1)
+	Context.Rules[0] = Rule{
+		id:            0,
+		Clusters:      []string{cluster},
+		Metrics:       DefaultMetrics,
+		GroupByLabels: DefaultGroupingLabels,
+	}
+}
+
+func setStringIfExit(destination *string, key string) {
+	if viper.Get(key) != nil {
+		*destination = viper.GetString(key)
+	}
+}
+
+func setStringSliceIfExist(destination *[]string, key string) {
+	if viper.Get(key) != nil {
+		*destination = viper.GetStringSlice(key)
+	}
+}
+
+func setIntIfExit(destination *int, key string) {
+	if viper.Get(key) != nil {
+		*destination = viper.GetInt(key)
+	}
+}
+
+func setBoolIfExist(destination *bool, key string) {
+	if viper.Get(key) != nil {
+		*destination = viper.GetBool(key)
+	}
+}
+
+func printVersion() {
+	fmt.Printf("ccloudexporter: %s\n", Version)
 }
 
 func contains(s []string, e string) bool {
