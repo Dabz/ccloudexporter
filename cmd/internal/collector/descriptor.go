@@ -97,7 +97,7 @@ func SendDescriptorQuery() DescriptorResponse {
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", "ccloudexporter/"+Version)
-	req.Header.Add("Correlation-Contex", "service.name=ccloudexporter,service.version=" +Version)
+	req.Header.Add("Correlation-Context", "service.name=ccloudexporter,service.version=" +Version)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
