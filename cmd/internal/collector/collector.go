@@ -9,17 +9,19 @@ package collector
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/nerdynick/confluent-cloud-metrics-go-sdk/ccloudmetrics"
+
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 // CCloudCollectorMetric describes a single Metric from Confluent Cloud
 type CCloudCollectorMetric struct {
-	metric   MetricDescription
+	metric   ccloudmetrics.Metric
 	desc     *prometheus.Desc
 	duration *prometheus.GaugeVec
 	labels   []string
@@ -32,6 +34,7 @@ type CCloudCollectorMetric struct {
 type CCloudCollector struct {
 	metrics map[string]CCloudCollectorMetric
 	rules   []Rule
+	client  ccloudmetrics.MetricsClient
 }
 
 // Describe collect all metrics for ccloudexporter
@@ -42,18 +45,19 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-var (
-	httpClient http.Client
-)
-
 // Collect all metrics for Prometheus
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	var wg sync.WaitGroup
+	now := time.Now()
+	granualrity := ccloudmetrics.Granularity(Context.Granularity)
 	for _, rule := range cc.rules {
-		for _, metric := range rule.Metrics {
-			wg.Add(1)
-			go cc.CollectMetricsForRule(&wg, ch, rule, cc.metrics[metric])
+		for _, cluster := range rule.Clusters {
+			for _, metric := range rule.Metrics {
+				ccmetric := cc.metrics[metric]
+				wg.Add(1)
+				go cc.CollectMetricsForRule(&wg, ch, now, granualrity, cluster, ccmetric, rule)
+			}
 		}
 	}
 
@@ -61,54 +65,65 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 // CollectMetricsForRule collects all metrics for a specific rule
-func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
+func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, now time.Time, granualrity ccloudmetrics.Granularity, cluster string, metric CCloudCollectorMetric, rule Rule) {
 	defer wg.Done()
-	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics)
-	durationMetric, _ := ccmetric.duration.GetMetricWithLabelValues(strconv.Itoa(rule.id))
-	timer := prometheus.NewTimer(prometheus.ObserverFunc(durationMetric.Set))
-	response, err := SendQuery(query)
-	timer.ObserveDuration()
-	ch <- durationMetric
+	var response []ccloudmetrics.QueryData
+	var err error
+	if len(rule.Topics) > 0 && metric.metric.HasLabel(ccloudmetrics.MetricLabelTopic) {
+		hasPartition := false
+		for _, label := range rule.WhitelistedLabels {
+			if ccloudmetrics.MetricLabelPartition == label {
+				hasPartition = true
+			}
+		}
+		response, err = cc.client.QueryMetricAndTopics(cluster, metric.metric, rule.Topics, granualrity, granualrity.GetStartTimeFromGranularity(now), now, hasPartition, blacklistedTopics)
+	} else {
+		response, err = cc.client.QueryMetricWithAggs(cluster, metric.metric, granualrity, granualrity.GetStartTimeFromGranularity(now), now, rule.WhitelistedLabels)
+	}
+
+	//CCloudMetrics SDK will allow for partial results even in the event of errors
+	if response != nil {
+		cc.handleResponse(response, metric, rule, ch)
+	}
+
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error(fmt.Sprintf("Error fetching results for rule. Error: %s", err.Error()))
 		return
 	}
-	cc.handleResponse(response, ccmetric, ch, rule)
 }
 
-func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule) {
-	desc := ccmetric.desc
-	for _, dataPoint := range response.Data {
-		// Some data points might need to be ignored if it is the global query
-		topic, topicPresent := dataPoint["metric.label.topic"].(string)
-		cluster, clusterPresent := dataPoint["metric.label.cluster_id"].(string)
+func (cc CCloudCollector) handleResponse(response []ccloudmetrics.QueryData, ccmetric CCloudCollectorMetric, rule Rule, ch chan<- prometheus.Metric) {
+	for _, dataPoint := range response {
 
-		if topicPresent && clusterPresent && rule.ShouldIgnoreResultForRule(topic, cluster, ccmetric.metric.Name) {
+		if dataPoint.HasTopic() && dataPoint.HasCluster() && rule.ShouldIgnoreResultForRule(dataPoint.Topic, dataPoint.Cluster, ccmetric.metric.Name) {
 			continue
 		}
 
-		value, ok := dataPoint["value"].(float64)
-		if !ok {
-			fmt.Println("Can not convert result to float:", dataPoint["value"])
-			return
-		}
-
 		labels := []string{}
-		for _, label := range ccmetric.labels {
-			labels = append(labels, fmt.Sprint(dataPoint["metric.label."+label]))
+		for _, label := range ccmetric.metric.Labels {
+			switch label.MetricLabel() {
+			case ccloudmetrics.MetricLabelCluster:
+				labels = append(labels, dataPoint.Cluster)
+			case ccloudmetrics.MetricLabelTopic:
+				labels = append(labels, dataPoint.Topic)
+			case ccloudmetrics.MetricLabelPartition:
+				labels = append(labels, dataPoint.Partition)
+			case ccloudmetrics.MetricLabelType:
+				labels = append(labels, dataPoint.Type)
+			}
 		}
 
 		metric := prometheus.MustNewConstMetric(
-			desc,
+			ccmetric.desc,
 			prometheus.GaugeValue,
-			value,
+			dataPoint.Value,
 			labels...,
 		)
 
 		if Context.NoTimestamp {
 			ch <- metric
 		} else {
-			timestamp, err := time.Parse(time.RFC3339, fmt.Sprint(dataPoint["timestamp"]))
+			timestamp, err := dataPoint.Time()
 			if err != nil {
 				fmt.Println(err.Error())
 				return
@@ -123,24 +138,54 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 // During the creation, we invoke the descriptor endpoint to fetcha all
 // existing metrics and their labels
 func NewCCloudCollector() CCloudCollector {
-	collector := CCloudCollector{rules: Context.Rules, metrics: make(map[string]CCloudCollectorMetric)}
-	descriptorResponse := SendDescriptorQuery()
+	user, present := os.LookupEnv("CCLOUD_USER")
+	if !present || user == "" {
+		fmt.Print("CCLOUD_USER environment variable has not been specified")
+		os.Exit(1)
+	}
+	password, present := os.LookupEnv("CCLOUD_PASSWORD")
+	if !present || password == "" {
+		fmt.Print("CCLOUD_PASSWORD environment variable has not been specified")
+		os.Exit(1)
+	}
+
+	apiContext := ccloudmetrics.NewAPIContext(user, password)
+	apiContext.BaseURL = Context.HTTPBaseURL
+
+	headers := make(map[string]string)
+	headers["Correlation-Context"] = fmt.Sprintf("service.name=ccloudexporter,service.version=%s", Version)
+
+	httpContext := ccloudmetrics.NewHTTPContext()
+	httpContext.UserAgent = fmt.Sprintf("ccloudexporter/%s", Version)
+	httpContext.HTTPHeaders = headers
+
+	collector := CCloudCollector{
+		rules:   Context.Rules,
+		metrics: make(map[string]CCloudCollectorMetric),
+		client:  ccloudmetrics.NewClientFromContext(apiContext, httpContext),
+	}
+	descriptorResponse, err := collector.client.GetAvailableMetrics()
+	if err != nil {
+		os.Exit(1)
+	}
+
 	mapOfWhiteListedMetrics := Context.GetMapOfMetrics()
 
-	for _, metr := range descriptorResponse.Data {
+	for _, metr := range descriptorResponse {
 		_, metricPresent := mapOfWhiteListedMetrics[metr.Name]
 		if !metricPresent {
 			continue
 		}
 		delete(mapOfWhiteListedMetrics, metr.Name)
+
 		var labels []string
 		for _, metrLabel := range metr.Labels {
-			labels = append(labels, metrLabel.Key)
+			labels = append(labels, metrLabel.Name)
 		}
 
 		desc := prometheus.NewDesc(
-			"ccloud_metric_"+GetNiceNameForMetric(metr),
-			metr.Description,
+			"ccloud_metric_"+metr.ShortName(),
+			metr.Desc,
 			labels,
 			nil,
 		)
@@ -158,10 +203,6 @@ func NewCCloudCollector() CCloudCollector {
 			labels:   labels,
 		}
 		collector.metrics[metr.Name] = metric
-	}
-
-	httpClient = http.Client{
-		Timeout: time.Second * time.Duration(Context.HTTPTimeout),
 	}
 
 	if len(mapOfWhiteListedMetrics) > 0 {

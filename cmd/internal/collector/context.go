@@ -1,5 +1,9 @@
 package collector
 
+import (
+	"github.com/nerdynick/confluent-cloud-metrics-go-sdk/ccloudmetrics"
+)
+
 //
 // context.go
 // Copyright (C) 2020 gaspar_d </var/spool/mail/gaspar_d>
@@ -24,11 +28,13 @@ type ExporterContext struct {
 // should collect for a specific set of topics or clusters
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
+	BlacklistedTopics                []string `mapstructure:"blacklisted"`
 	Clusters                         []string `mapstructure:"clusters"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
 	cachedIgnoreGlobalResultForTopic map[TopicClusterMetric]bool
 	id                               int
+	WhitelistedLabels                []ccloudmetrics.MetricLabel
 }
 
 // TopicClusterMetric represents a combination of a topic, a cluster and a metric

@@ -7,12 +7,16 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "flag"
-import "fmt"
-import "os"
-import "github.com/spf13/viper"
+import (
+	"flag"
+	"fmt"
+	"os"
+	"strings"
 
-var supportedGranularity = []string{"PT1M", "PT5M", "PT15M", "PT30M", "PT1H"}
+	"github.com/nerdynick/confluent-cloud-metrics-go-sdk/ccloudmetrics"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+)
 
 // ParseOption parses options provided by the CLI and the configuration file
 // This function will panic if the options are invalid
@@ -22,8 +26,8 @@ func ParseOption() {
 
 	flag.StringVar(&configPath, "config", "", "Path to configuration file used to override default behavior of ccloudexporter")
 	flag.IntVar(&Context.HTTPTimeout, "timeout", 60, "Timeout, in second, to use for all REST call with the Metric API")
-	flag.StringVar(&Context.HTTPBaseURL, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
-	flag.StringVar(&Context.Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
+	flag.StringVar(&Context.HTTPBaseURL, "endpoint", ccloudmetrics.DefaultBaseURL, "Base URL for the Metric API")
+	flag.StringVar(&Context.Granularity, "granularity", ccloudmetrics.GranularityOneMin.String(), fmt.Sprintf("Granularity for the metrics query, by default set to 1 minutes. Available options are `%s`", strings.Join(ccloudmetrics.AvailableGranularities, ", ")))
 	flag.IntVar(&Context.Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
 	flag.StringVar(&cluster, "cluster", "", "Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
 	flag.StringVar(&Context.Listener, "listener", ":2112", "Listener for the HTTP interface")
@@ -54,31 +58,47 @@ func ParseOption() {
 
 func validateConfiguration() {
 
-	if !contains(supportedGranularity, Context.Granularity) {
+	if !contains(ccloudmetrics.AvailableGranularities, Context.Granularity) {
 		fmt.Printf("Granularity %s is invalid \n", Context.Granularity)
 		os.Exit(1)
 	}
 
 	for _, rule := range Context.Rules {
+		//Check Cluster
 		if len(rule.Clusters) == 0 {
 			fmt.Println("No cluster ID has been specified in a rule")
 			flag.Usage()
 			os.Exit(1)
 		}
 
+		//Check Labels
+		if len(rule.GroupByLabels) == 0 {
+			fmt.Println("Labels are required while defining a rule")
+			os.Exit(1)
+		}
 		if contains(rule.GroupByLabels, "partition") && len(rule.Topics) == 0 {
 			fmt.Println("Topic filtering is required while grouping per partition")
 			os.Exit(1)
 		}
 
+		whitelistedLabels := []ccloudmetrics.MetricLabel{}
+		for _, l := range rule.GroupByLabels {
+			label := ccloudmetrics.NewMetricLabel(l)
+			if !label.IsValid() {
+				log.WithFields(log.Fields{
+					"Label":           l,
+					"AvailableLabels": ccloudmetrics.AvailableMetricLabels,
+				}).Error("Invalid label")
+				os.Exit(1)
+			}
+			whitelistedLabels = append(whitelistedLabels, label)
+		}
+		rule.WhitelistedLabels = whitelistedLabels
+
+		//Check Rules
 		if len(rule.Topics) > 100 {
 			fmt.Println("A rule can not have more than 100 topics")
 			fmt.Println("Note: Dispatching your topics over multiple rule should fix this issue")
-			os.Exit(1)
-		}
-
-		if len(rule.GroupByLabels) == 0 {
-			fmt.Println("Labels is required while defining a rule")
 			os.Exit(1)
 		}
 	}
