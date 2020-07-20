@@ -3,7 +3,7 @@ module github.com/Dabz/ccloudexporter
 go 1.14
 
 require (
-	github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717203802-148267bd1cde
+	github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200719234453-6847fae9cace
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.0

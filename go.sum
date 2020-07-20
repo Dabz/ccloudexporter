@@ -166,6 +166,12 @@ github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717200006-b1560b
 github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717200006-b1560b6ce043/go.mod h1:OICeJycH8OZldywYg+r87ik/nc5gdqIDePj4w9JnSRE=
 github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717203802-148267bd1cde h1:0TZj2w1oGlSTyuBTId6JS+e2fMt+LMP1x7tzVccB7Zg=
 github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717203802-148267bd1cde/go.mod h1:OICeJycH8OZldywYg+r87ik/nc5gdqIDePj4w9JnSRE=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717210207-8c3f5c11ce55 h1:qYx8RExASdThj0hYQvftHPEMHJERPksdkfouFlqMaV4=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200717210207-8c3f5c11ce55/go.mod h1:OICeJycH8OZldywYg+r87ik/nc5gdqIDePj4w9JnSRE=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200719225201-4f0ad49d0068 h1:eNeYb4FkpJhg5qI+y1LVfUCNIpRjuseM85l2Tx35xx0=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200719225201-4f0ad49d0068/go.mod h1:OICeJycH8OZldywYg+r87ik/nc5gdqIDePj4w9JnSRE=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200719234453-6847fae9cace h1:8NjWo3CrE/hZrNjv8KvgLP4Is5XC3yFukY4gM43/els=
+github.com/nerdynick/confluent-cloud-metrics-go-sdk v0.0.0-20200719234453-6847fae9cace/go.mod h1:OICeJycH8OZldywYg+r87ik/nc5gdqIDePj4w9JnSRE=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=

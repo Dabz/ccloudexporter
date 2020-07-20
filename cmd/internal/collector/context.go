@@ -32,9 +32,9 @@ type Rule struct {
 	Clusters                         []string `mapstructure:"clusters"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
+	WhitelistedLabels                []ccloudmetrics.MetricLabel
 	cachedIgnoreGlobalResultForTopic map[TopicClusterMetric]bool
 	id                               int
-	WhitelistedLabels                []ccloudmetrics.MetricLabel
 }
 
 // TopicClusterMetric represents a combination of a topic, a cluster and a metric
@@ -52,9 +52,9 @@ var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
 var DefaultGroupingLabels = []string{
-	"cluster_id",
-	"topic",
-	"type",
+	ccloudmetrics.MetricLabelCluster.String(),
+	ccloudmetrics.MetricLabelTopic.String(),
+	ccloudmetrics.MetricLabelType.String(),
 }
 
 // DefaultMetrics is the default value for metrics

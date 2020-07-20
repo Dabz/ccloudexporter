@@ -18,12 +18,21 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	verbose           bool
+	extraVerbose      bool
+	extraExtraVerbose bool
+)
+
 // ParseOption parses options provided by the CLI and the configuration file
 // This function will panic if the options are invalid
 func ParseOption() {
 	var cluster string
 	var configPath string
 
+	flag.BoolVar(&verbose, "v", false, "Verbose output")
+	flag.BoolVar(&extraVerbose, "vv", false, "Extra Verbose output")
+	flag.BoolVar(&extraExtraVerbose, "vvv", false, "Extra Extra Verbose output")
 	flag.StringVar(&configPath, "config", "", "Path to configuration file used to override default behavior of ccloudexporter")
 	flag.IntVar(&Context.HTTPTimeout, "timeout", 60, "Timeout, in second, to use for all REST call with the Metric API")
 	flag.StringVar(&Context.HTTPBaseURL, "endpoint", ccloudmetrics.DefaultBaseURL, "Base URL for the Metric API")
@@ -35,6 +44,21 @@ func ParseOption() {
 	versionFlag := flag.Bool("version", false, "Print the current version and exit")
 
 	flag.Parse()
+
+	//Setup Logging Levels
+	if verbose || extraVerbose || extraExtraVerbose {
+		log.SetLevel(log.InfoLevel)
+
+		if extraVerbose {
+			log.SetLevel(log.DebugLevel)
+		}
+
+		if extraExtraVerbose {
+			log.SetLevel(log.TraceLevel)
+		}
+	} else {
+		log.SetLevel(log.WarnLevel)
+	}
 
 	if *versionFlag {
 		printVersion()
@@ -57,13 +81,13 @@ func ParseOption() {
 }
 
 func validateConfiguration() {
-
+	log.WithField("Context", Context).Debug("Pre-Validation Context")
 	if !contains(ccloudmetrics.AvailableGranularities, Context.Granularity) {
 		fmt.Printf("Granularity %s is invalid \n", Context.Granularity)
 		os.Exit(1)
 	}
 
-	for _, rule := range Context.Rules {
+	for i, rule := range Context.Rules {
 		//Check Cluster
 		if len(rule.Clusters) == 0 {
 			fmt.Println("No cluster ID has been specified in a rule")
@@ -93,7 +117,12 @@ func validateConfiguration() {
 			}
 			whitelistedLabels = append(whitelistedLabels, label)
 		}
-		rule.WhitelistedLabels = whitelistedLabels
+		Context.Rules[i].WhitelistedLabels = whitelistedLabels
+
+		log.WithFields(log.Fields{
+			"GroupLabels":       rule.GroupByLabels,
+			"WhitelistedLabels": rule.WhitelistedLabels,
+		}).Debug("Rule Labels->Whitelist")
 
 		//Check Rules
 		if len(rule.Topics) > 100 {
@@ -102,6 +131,8 @@ func validateConfiguration() {
 			os.Exit(1)
 		}
 	}
+
+	log.WithField("Context", Context).Info("Final Context")
 }
 
 func parseConfigFile(configPath string) {
@@ -110,8 +141,7 @@ func parseConfigFile(configPath string) {
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		fmt.Println("Can not read configuration file")
-		panic(err)
+		log.Panic("Can not read configuration file")
 	}
 
 	setIntIfExit(&Context.Delay, "config.delay")
@@ -129,12 +159,17 @@ func parseConfigFile(configPath string) {
 }
 
 func createDefaultRule(cluster string) {
+	if cluster == "" {
+		log.Panic("No Cluster was provided")
+	}
+
 	Context.Rules = make([]Rule, 1)
 	Context.Rules[0] = Rule{
 		id:            0,
 		Clusters:      []string{cluster},
 		Metrics:       DefaultMetrics,
 		GroupByLabels: DefaultGroupingLabels,
+		Topics:        []string{},
 	}
 }
 

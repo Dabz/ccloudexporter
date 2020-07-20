@@ -21,12 +21,11 @@ import (
 
 // CCloudCollectorMetric describes a single Metric from Confluent Cloud
 type CCloudCollectorMetric struct {
-	metric   ccloudmetrics.Metric
-	desc     *prometheus.Desc
-	duration *prometheus.GaugeVec
-	labels   []string
-	rule     Rule
-	global   bool
+	metric ccloudmetrics.Metric
+	desc   *prometheus.Desc
+	labels []string
+	rule   Rule
+	global bool
 }
 
 // CCloudCollector is a custom prometheu collector to collect data from
@@ -41,22 +40,33 @@ type CCloudCollector struct {
 func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, desc := range cc.metrics {
 		ch <- desc.desc
-		desc.duration.Describe(ch)
 	}
 }
 
 // Collect all metrics for Prometheus
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
+	log.WithFields(log.Fields{
+		"Rules":   cc.rules,
+		"Metrics": cc.metrics,
+	}).Info("Collecting Metrics")
+
 	var wg sync.WaitGroup
 	now := time.Now()
 	granualrity := ccloudmetrics.Granularity(Context.Granularity)
 	for _, rule := range cc.rules {
 		for _, cluster := range rule.Clusters {
 			for _, metric := range rule.Metrics {
-				ccmetric := cc.metrics[metric]
-				wg.Add(1)
-				go cc.CollectMetricsForRule(&wg, ch, now, granualrity, cluster, ccmetric, rule)
+				ccmetric, present := cc.metrics[metric]
+				if present {
+					wg.Add(1)
+					go cc.CollectMetricsForRule(&wg, ch, now, granualrity, cluster, ccmetric, rule)
+				} else {
+					log.WithFields(log.Fields{
+						"Rule":   rule,
+						"Metric": metric,
+					}).Warn("Metric is missing")
+				}
 			}
 		}
 	}
@@ -69,17 +79,33 @@ func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- pr
 	defer wg.Done()
 	var response []ccloudmetrics.QueryData
 	var err error
+	log.WithFields(log.Fields{
+		"Granularity":       granualrity,
+		"Cluster":           cluster,
+		"Metric":            metric,
+		"Topics":            rule.Topics,
+		"WhitelistedLabels": rule.WhitelistedLabels,
+		"Rule":              rule,
+	}).Debug("Collecting Metric")
+
 	if len(rule.Topics) > 0 && metric.metric.HasLabel(ccloudmetrics.MetricLabelTopic) {
+		log.Trace("Topics where provided in rule and metric has Topics label.")
 		hasPartition := false
 		for _, label := range rule.WhitelistedLabels {
 			if ccloudmetrics.MetricLabelPartition == label {
 				hasPartition = true
 			}
 		}
-		response, err = cc.client.QueryMetricAndTopics(cluster, metric.metric, rule.Topics, granualrity, granualrity.GetStartTimeFromGranularity(now), now, hasPartition, blacklistedTopics)
+		response, err = cc.client.QueryMetricAndTopics(cluster, metric.metric, rule.Topics, granualrity, granualrity.GetStartTimeFromGranularity(now), now, hasPartition, rule.BlacklistedTopics)
 	} else {
+		log.Trace("Not Topics or Metrics didn't have label")
 		response, err = cc.client.QueryMetricWithAggs(cluster, metric.metric, granualrity, granualrity.GetStartTimeFromGranularity(now), now, rule.WhitelistedLabels)
 	}
+
+	log.WithFields(log.Fields{
+		"Response": response,
+		"Error":    err,
+	}).Debug("Revied Response")
 
 	//CCloudMetrics SDK will allow for partial results even in the event of errors
 	if response != nil {
@@ -87,7 +113,7 @@ func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- pr
 	}
 
 	if err != nil {
-		log.Error(fmt.Sprintf("Error fetching results for rule. Error: %s", err.Error()))
+		log.WithError(err).Error("Error fetching results for rule.")
 		return
 	}
 }
@@ -166,8 +192,10 @@ func NewCCloudCollector() CCloudCollector {
 	}
 	descriptorResponse, err := collector.client.GetAvailableMetrics()
 	if err != nil {
+		log.WithError(err).Error("Failed to fetch available metrics")
 		os.Exit(1)
 	}
+	log.WithField("AvailableMetrics", descriptorResponse).Debug("Currently Available Metrics")
 
 	mapOfWhiteListedMetrics := Context.GetMapOfMetrics()
 
@@ -177,7 +205,6 @@ func NewCCloudCollector() CCloudCollector {
 			continue
 		}
 		delete(mapOfWhiteListedMetrics, metr.Name)
-
 		var labels []string
 		for _, metrLabel := range metr.Labels {
 			labels = append(labels, metrLabel.Name)
@@ -190,26 +217,16 @@ func NewCCloudCollector() CCloudCollector {
 			nil,
 		)
 
-		requestDuration := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name:        "ccloud_metrics_api_request_latency",
-			Help:        "Metrics API request latency",
-			ConstLabels: map[string]string{"metric": metr.Name},
-		}, []string{"ruleNumber"})
-
 		metric := CCloudCollectorMetric{
-			metric:   metr,
-			desc:     desc,
-			duration: requestDuration,
-			labels:   labels,
+			metric: metr,
+			desc:   desc,
+			labels: labels,
 		}
 		collector.metrics[metr.Name] = metric
 	}
 
 	if len(mapOfWhiteListedMetrics) > 0 {
-		fmt.Println("WARNING: The following metrics will not be gathered as they are not exposed by the Metrics API:")
-		for key := range mapOfWhiteListedMetrics {
-			fmt.Println("  -", key)
-		}
+		log.WithField("Metrics", mapOfWhiteListedMetrics).Warn("The following metrics will not be gathered as they are not exposed by the Metrics API")
 	}
 
 	return collector
