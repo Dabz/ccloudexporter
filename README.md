@@ -1,13 +1,21 @@
+# Important information
+
+In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
+Nowadays, only the API key/secret is officially supported to connect to the Metrics API.
+
+To ensure backward compatibility, previous environment variables are still available.
+Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
+
 # Prometheus exporter for Confluent Cloud Metrics API
 
 A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
 By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112)
 To use the exporter, the following environment variables need to be specified:
 
-* `CCLOUD_USER`: Your Confluent Cloud login, or the API Key created with `ccloud api-key create --resource cloud`
-* `CCLOUD_PASSWORD`: Your Confluent Cloud password, or the API Key Secret when created with `ccloud api-key create --resource cloud`
+* `CCLOUD_API_KEY`: The API Key created with `ccloud api-key create --resource cloud`
+* `CCLOUD_API_SECRET`: The API Key Secret created with `ccloud api-key create --resource cloud`
 
-`CCLOUD_USER` and `CCLOUD_PASSWORD` environment variables will be used to invoke the https://api.telemetry.confluent.cloud endpoint.
+`CCLOUD_API_KEY` and `CCLOUD_API_SECRET` environment variables will be used to invoke the https://api.telemetry.confluent.cloud endpoint.
 
 ## Usage
 ```
@@ -44,16 +52,16 @@ Usage of ./ccloudexporter:
 ```shell script
 go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 go install github.com/Dabz/ccloudexporter/cmd/ccloudexporter
-export CCLOUD_USER=toto@confluent.io
-export CCLOUD_PASSWORD=totopassword
+export CCLOUD_API_KEY=ABCDEFGHIKLMNOP
+export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 ./ccloudexporter -cluster lkc-abc123
 ```
 
 ### Using docker
 ```shell script
 docker run \
-  -e CCLOUD_USER=$CCLOUD_USER \
-  -e CCLOUD_PASSWORD=$CCLOUD_PASSWORD
+  -e CCLOUD_API_KEY=$CCLOUD_API_KEY \
+  -e CCLOUD_API_SECRET=$CCLOUD_API_SECRET
   -e CCLOUD_CLUSTER=lkc-abc123
   -p 2112:2112
   dabz/ccloudexporter:latest
@@ -61,8 +69,8 @@ docker run \
 
 ### Using docker-compose
 ```shell script
-export CCLOUD_USER=toto@confluent.io
-export CCLOUD_PASSWORD=totopassword
+export CCLOUD_API_KEY=ABCDEFGHIKLMNOP
+export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 export CCLOUD_CLUSTER=lkc-abc123
 docker-compose up -d
 ```

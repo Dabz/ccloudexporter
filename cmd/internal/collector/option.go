@@ -7,10 +7,14 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "flag"
-import "fmt"
-import "os"
-import "github.com/spf13/viper"
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/spf13/viper"
+)
 
 var supportedGranularity = []string{"PT1M", "PT5M", "PT15M", "PT30M", "PT1H"}
 
@@ -50,6 +54,38 @@ func ParseOption() {
 		createDefaultRule(cluster)
 	}
 	validateConfiguration()
+}
+
+// MustGetAPIKey returns the API Key from environment variables
+// if an API Key can not be find, it exits the process
+func MustGetAPIKey() string {
+	key, present := os.LookupEnv("CCLOUD_API_KEY")
+	if present && key != "" {
+		return key
+	}
+
+	key, present = os.LookupEnv("CCLOUD_USER")
+	if present && key != "" {
+		return key
+	}
+
+	panic(errors.New("CCLOUD_API_KEY environment variable has not been specified"))
+}
+
+// MustGetAPISecret returns the API Key from environment variables
+// if an API Key can not be find, it exits the process
+func MustGetAPISecret() string {
+	secret, present := os.LookupEnv("CCLOUD_API_SECRET")
+	if present && secret != "" {
+		return secret
+	}
+
+	secret, present = os.LookupEnv("CCLOUD_PASSWORD")
+	if present && secret != "" {
+		return secret
+	}
+
+	panic(errors.New("CCLOUD_API_SECRET environment variable has not been specified"))
 }
 
 func validateConfiguration() {
