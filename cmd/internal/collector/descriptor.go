@@ -9,9 +9,7 @@ package collector
 
 import "strings"
 import "errors"
-import "os"
 import "fmt"
-import "net/http"
 import "encoding/json"
 import "io/ioutil"
 
@@ -77,27 +75,8 @@ func GetNiceNameForMetric(metric MetricDescription) string {
 // SendDescriptorQuery calls the https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors endpoint
 // to retrieve the list of metrics
 func SendDescriptorQuery() DescriptorResponse {
-	user, present := os.LookupEnv("CCLOUD_USER")
-	if !present || user == "" {
-		fmt.Print("CCLOUD_USER environment variable has not been specified")
-		os.Exit(1)
-	}
-	password, present := os.LookupEnv("CCLOUD_PASSWORD")
-	if !present || password == "" {
-		fmt.Print("CCLOUD_PASSWORD environment variable has not been specified")
-		os.Exit(1)
-	}
-
 	endpoint := Context.HTTPBaseURL + descriptorURI
-	req, err := http.NewRequest("GET", endpoint, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	req.SetBasicAuth(user, password)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("User-Agent", "ccloudexporter/"+Version)
-	req.Header.Add("Correlation-Context", "service.name=ccloudexporter,service.version=" +Version)
+	req := MustGetNewRequest("GET", endpoint, nil)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -105,8 +84,9 @@ func SendDescriptorQuery() DescriptorResponse {
 	}
 
 	if res.StatusCode != 200 {
-		fmt.Printf("Received status code %d instead of 200", res.StatusCode)
-		os.Exit(1)
+		body, _ := ioutil.ReadAll(res.Body)
+		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for GET on %s. \n\n%s\n\n", res.StatusCode, endpoint, body)
+		panic(errors.New(errorMsg))
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
