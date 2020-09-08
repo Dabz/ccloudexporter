@@ -1,6 +1,7 @@
 version: '3.1'
 
 services:
+
   prometheus:
     image: prom/prometheus
     volumes:
@@ -10,9 +11,9 @@ services:
     ports:
       - 9090:9090
     restart: always
+
   ccloud_exporter:
     build: ./
-    environment:
-      CCLOUD_USER: ${CCLOUD_USER}
-      CCLOUD_PASSWORD: ${CCLOUD_PASSWORD}
-    command: -cluster ${CCLOUD_CLUSTER}
+    env_file:
+      - ./ccloud_exporter.env
+    command: ["-cluster", "$${CCLOUD_CLUSTER}"]
