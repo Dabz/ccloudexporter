@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ccloudexporter
+    ccloudexporter: ccloudexporter
+  name: ccloudexporter
+  #annotations:
+  #  prometheus.io/scrape: "true"
+  #  prometheus.io/port: "metrics"
+spec:
+  ports:
+  - name: metrics
+    port: 2112
+    protocol: TCP
+    targetPort: 2112
+  selector:
+    app: ccloudexporter
+  type: ClusterIP

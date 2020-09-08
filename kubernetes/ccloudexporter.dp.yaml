@@ -2,15 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: cloudexporter
-  name: cloudexporter
+    app: ccloudexporter
+  name: ccloudexporter
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: cloudexporter
+      app: ccloudexporter
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -19,10 +19,10 @@ spec:
   template:
     metadata:
       labels:
-        app: cloudexporter
+        app: ccloudexporter
     spec:
       containers:
-      - name: cloudexporter
+      - name: ccloudexporter
         image: dabz/ccloudexporter:latest
         envFrom:
           - secretRef:
