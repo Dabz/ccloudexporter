@@ -1,0 +1,4 @@
+ccloud/
+ccloud_exporter.env
+.history/
+kubernetes/cloudexporter.cm.yaml
