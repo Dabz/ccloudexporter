@@ -1,0 +1,35 @@
+# create...
+# $ kubectl apply -f ./test.yaml
+#
+# export FQDN=cloudexporter
+# export FQDN=cloudexporter.cloudexporter.svc.cluster.local
+# curl -s http://$FQDN:2112/metrics
+# https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: centos-dp
+  labels:
+    app: centos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: centos
+  template:
+    metadata:
+      labels:
+        app: centos
+    spec:
+      containers:
+      - name: centos
+        image: centos:latest
+        command: ["sleep", "1800"]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
