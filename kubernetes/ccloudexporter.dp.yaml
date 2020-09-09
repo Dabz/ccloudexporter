@@ -2,15 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ccloudexporter
-  name: ccloudexporter
+    app: #{cluster}#-dp
+  name: #{cluster}#-dp
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: ccloudexporter
+      app: #{cluster}#-dp
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -19,15 +19,15 @@ spec:
   template:
     metadata:
       labels:
-        app: ccloudexporter
+        app: #{cluster}#-dp
     spec:
       containers:
       - name: ccloudexporter
         image: dabz/ccloudexporter:latest
         envFrom:
           - secretRef:
-              name: ccloud-exporter-vars
-        command: ["/ccloudexporter", "-cluster", "$(CCLOUD_CLUSTER)"]
+              name: #{cluster}#-vars
+        #command: ["/ccloudexporter", "-cluster", "$(CCLOUD_CLUSTER)"]
         imagePullPolicy: Always
         ports:
         - containerPort: 2112

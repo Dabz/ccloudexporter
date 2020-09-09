@@ -84,10 +84,12 @@ Kubernetes deployment with Prometheus Operator. These following lines assume the
 cp ./ccloud_exporter.env-template ./ccloud_exporter.env
 vim ./ccloud_exporter.env
 cd ./kubernetes
-make all
+make install
 ```
 
 > A Deployment and a Service object are deployed to a unique namespace. A ServiceMonitor CRD is deployed to the Prometheus Operator namespace.
+
+* To delete deployment: `cd ./kubernetes && make remove`
 
 ## Configuration file
 

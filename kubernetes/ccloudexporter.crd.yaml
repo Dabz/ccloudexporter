@@ -4,17 +4,17 @@ metadata:
   labels:
     release: monitoring
     app: ccloudexporter
-  name: ccloudexporter
+  name: #{cluster}#-crd
 spec:
   jobLabel: ccloudexporter
   endpoints:
   - path: /metrics
     port: metrics
-    interval: 30s
+    interval: 60s
   namespaceSelector:
     matchNames:
     - ccloudexporter
   selector:
     matchExpressions:
-    - key: ccloudexporter
+    - key: #{cluster}#-svc
       operator: Exists
