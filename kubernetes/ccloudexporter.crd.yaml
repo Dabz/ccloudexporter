@@ -1,20 +1,28 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  name: ccloudexporter
   labels:
     release: monitoring
-    app: ccloudexporter
-  name: ccloudexporter
+    crd: ccloudexporter
 spec:
-  jobLabel: ccloudexporter
+  selector:
+    #matchLabels:
+    #  scrape: prometheus
+    #matchExpressions:
+    #- key: app
+    #  operator: Exists
+    #matchExpressions:
+    #- key: app
+    #  operator: In
+    #  values: #{cluster}#-svc
+    matchExpressions:
+    - key: scrape
+      operator: Exists
   endpoints:
-  - path: /metrics
-    port: metrics
-    interval: 30s
+  - port: metrics
+    path: /metrics
+    interval: 60s
   namespaceSelector:
     matchNames:
     - ccloudexporter
-  selector:
-    matchExpressions:
-    - key: ccloudexporter
-      operator: Exists
