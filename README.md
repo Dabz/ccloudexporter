@@ -70,6 +70,8 @@ docker run \
 
 ### Using Docker Compose
 
+* It only works with 1 ccloud kafka cluster id
+
 ```shell
 cp ./ccloud_exporter.env-template ./ccloud_exporter.env
 vim ./ccloud_exporter.env
@@ -78,12 +80,13 @@ docker-compose up -d
 
 ### Using Kubernetes
 
-Kubernetes deployment with Prometheus Operator. These following lines assume there is Prometheus Operator already running in the cluster with `release=monitoring`.
+* Kubernetes deployment with Prometheus Operator. These following lines assume there is Prometheus Operator already running in the cluster with `label: release=monitoring`.
+* It works with N ccloud kafka cluster ids. Add the list of cluster ids separated by spaces in `./kubernetes/ccloud_exporter.env` (like `CCLOUD_CLUSTERS=<cluster_id1> <cluster_id2> ...`).
 
 ```shell
-cp ./ccloud_exporter.env-template ./ccloud_exporter.env
-vim ./ccloud_exporter.env
+cp ./ccloud_exporter.env-template ./kubernetes/ccloud_exporter.env
 cd ./kubernetes
+vim ./ccloud_exporter.env
 make install
 ```
 

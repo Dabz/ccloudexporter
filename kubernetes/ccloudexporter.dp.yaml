@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: #{cluster}#-dp
+    app: #{cluster}#
   name: #{cluster}#-dp
 spec:
   progressDeadlineSeconds: 600
@@ -10,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: #{cluster}#-dp
+      app: #{cluster}#
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        app: #{cluster}#-dp
+        app: #{cluster}#
     spec:
       containers:
       - name: ccloudexporter
