@@ -64,24 +64,33 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
 	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics)
+	optimizedQuery, additionalLabels := OptimizeQuery(query)
 	durationMetric, _ := ccmetric.duration.GetMetricWithLabelValues(strconv.Itoa(rule.id))
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(durationMetric.Set))
-	response, err := SendQuery(query)
+	response, err := SendQuery(optimizedQuery)
 	timer.ObserveDuration()
 	ch <- durationMetric
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	cc.handleResponse(response, ccmetric, ch, rule)
+	cc.handleResponse(response, ccmetric, ch, rule, additionalLabels)
 }
 
-func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule) {
+func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule, additionalLabels map[string]string) {
 	desc := ccmetric.desc
 	for _, dataPoint := range response.Data {
 		// Some data points might need to be ignored if it is the global query
 		topic, topicPresent := dataPoint["metric.label.topic"].(string)
 		cluster, clusterPresent := dataPoint["metric.label.cluster_id"].(string)
+
+		if ! clusterPresent {
+			cluster, clusterPresent = additionalLabels["metric.label.cluster_id"]
+		}
+
+		if ! topicPresent {
+			topic, topicPresent = additionalLabels["metric.label.topic"]
+		}
 
 		if topicPresent && clusterPresent && rule.ShouldIgnoreResultForRule(topic, cluster, ccmetric.metric.Name) {
 			continue
@@ -95,7 +104,11 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 
 		labels := []string{}
 		for _, label := range ccmetric.labels {
-			labels = append(labels, fmt.Sprint(dataPoint["metric.label."+label]))
+			labelValue, labelValuePresent := dataPoint["metric.label."+label].(string)
+			if ! labelValuePresent {
+				labelValue, labelValuePresent = additionalLabels["metric.label."+label]
+			}
+			labels = append(labels, labelValue)
 		}
 
 		metric := prometheus.MustNewConstMetric(
