@@ -8,19 +8,18 @@ Nonetheless, username/password is now **deprecated** and you **must** rely on AP
 
 # Prometheus exporter for Confluent Cloud Metrics API
 
-A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
-By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112)
-To use the exporter, the following environment variables need to be specified:
-
-* `CCLOUD_API_KEY`: The API Key created with `ccloud api-key create --resource cloud`
-* `CCLOUD_API_SECRET`: The API Key Secret created with `ccloud api-key create --resource cloud`
-
-`CCLOUD_API_KEY` and `CCLOUD_API_SECRET` environment variables will be used to invoke the https://api.telemetry.confluent.cloud endpoint.
+* A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
+* By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112)
+* To use the exporter, the following environment variables need to be specified: `CCLOUD_API_KEY` and `CCLOUD_API_SECRET`.
+    * The API Key and Secret created with `ccloud api-key create --resource cloud`.
+    * These environment variables will be used to invoke the `https://api.telemetry.confluent.cloud` endpoint.
+    * Place those variables into `./ccloud_exporter.env`
 
 ## Usage
-```
+
+```shell
 ./ccloudexporter -cluster <cluster_id>
-````
+```
 
 ### Options
 
@@ -49,7 +48,8 @@ Usage of ./ccloudexporter:
 ## Examples
 
 ### Building and executing
-```shell script
+
+```shell
 go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 go install github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 export CCLOUD_API_KEY=ABCDEFGHIKLMNOP
@@ -57,8 +57,9 @@ export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 ./ccloudexporter -cluster lkc-abc123
 ```
 
-### Using docker
-```shell script
+### Using Docker
+
+```shell
 docker run \
   -e CCLOUD_API_KEY=$CCLOUD_API_KEY \
   -e CCLOUD_API_SECRET=$CCLOUD_API_SECRET
@@ -67,13 +68,31 @@ docker run \
   dabz/ccloudexporter:latest
 ```
 
-### Using docker-compose
-```shell script
-export CCLOUD_API_KEY=ABCDEFGHIKLMNOP
-export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
-export CCLOUD_CLUSTER=lkc-abc123
+### Using Docker Compose
+
+* It only works with 1 ccloud kafka cluster id
+
+```shell
+cp ./ccloud_exporter.env-template ./ccloud_exporter.env
+vim ./ccloud_exporter.env
 docker-compose up -d
 ```
+
+### Using Kubernetes
+
+* Kubernetes deployment with Prometheus Operator. These following lines assume there is Prometheus Operator already running in the cluster with `label: release=monitoring`.
+* It works with N ccloud kafka cluster ids. Add the list of cluster ids separated by spaces in `./kubernetes/ccloud_exporter.env` (like `CCLOUD_CLUSTERS=<cluster_id1> <cluster_id2> ...`).
+
+```shell
+cp ./ccloud_exporter.env-template ./kubernetes/ccloud_exporter.env
+cd ./kubernetes
+vim ./ccloud_exporter.env
+make install
+```
+
+> A Deployment and a Service object are deployed to a unique namespace. A ServiceMonitor CRD is deployed to the Prometheus Operator namespace.
+
+* To delete deployment: `cd ./kubernetes && make remove`
 
 ## Configuration file
 
@@ -146,11 +165,13 @@ In order to avoid reaching the limit of 1,000 points set by the Confluent Cloud 
 - `clusters`, `labels` and `metrics` are required in each rule
 
 ## How to build
+
 ```
 go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 ```
 
 ## Grafana
+
 A Grafana dashboard is provided in [./grafana/](./grafana) folder.
 
 ![Grafana Screenshot](./grafana/grafana.png)
