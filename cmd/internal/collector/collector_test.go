@@ -71,7 +71,7 @@ func TestHandleResponse(t *testing.T) {
 
 	pchan := make(chan prometheus.Metric, 10)
 
-	collector.handleResponse(response, metric, pchan, rule)
+	collector.handleResponse(response, metric, pchan, rule, make(map[string]string))
 
 	if len(pchan) != 2 {
 		t.Errorf("Invalid number of metrics returned, expected 2 got %d", len(pchan))

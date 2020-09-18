@@ -78,3 +78,45 @@ func TestBuildQueryWithTopic(t *testing.T) {
 		return
 	}
 }
+
+func TestOptimizationRemoveSuperfelousGroupBy(t *testing.T) {
+	metric := MetricDescription{
+		Name: "io.confluent.kafka.server/retained_bytes",
+		Labels: []MetricLabel{{
+			Key: "topic",
+		}, {
+			Key: "cluster_id",
+		}, {
+			Key: "partition",
+		}},
+	}
+
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil))
+
+	if (len(query.GroupBy) > 1) {
+		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
+		t.Fail()
+		return
+	}
+}
+
+func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
+	metric := MetricDescription{
+		Name: "io.confluent.kafka.server/retained_bytes",
+		Labels: []MetricLabel{{
+			Key: "topic",
+		}, {
+			Key: "cluster_id",
+		}, {
+			Key: "partition",
+		}},
+	}
+
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"cluster_id", "topic"}, nil))
+
+	if (len(query.GroupBy) <= 1) {
+		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
+		t.Fail()
+		return
+	}
+}
