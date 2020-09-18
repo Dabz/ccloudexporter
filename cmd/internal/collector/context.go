@@ -61,6 +61,7 @@ var DefaultMetrics = []string{
 	"io.confluent.kafka.server/active_connection_count",
 	"io.confluent.kafka.server/request_count",
 	"io.confluent.kafka.server/partition_count",
+	"io.confluent.kafka.server/successful_authentication_count",
 }
 
 // GetMapOfMetrics returns the whitelist of metrics in a map
