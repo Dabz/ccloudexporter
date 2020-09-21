@@ -8,6 +8,8 @@ package collector
 //
 
 import "testing"
+import "strings"
+import "time"
 
 func TestBuildQuery(t *testing.T) {
 	metric := MetricDescription{
@@ -34,6 +36,17 @@ func TestBuildQuery(t *testing.T) {
 	}
 
 	if query.Filter.Filters[0].Filters[0].Value != "cluster" {
+		t.Fail()
+		return
+	}
+
+	if len(query.Intervals) == 0 {
+		t.Fail()
+		return
+	}
+
+	timeFrom, _ := time.Parse(time.RFC3339, strings.Split(query.Intervals[0], "/")[0])
+	if timeFrom.Second() != 0 {
 		t.Fail()
 		return
 	}
@@ -93,7 +106,7 @@ func TestOptimizationRemoveSuperfelousGroupBy(t *testing.T) {
 
 	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil))
 
-	if (len(query.GroupBy) > 1) {
+	if len(query.GroupBy) > 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
 		t.Fail()
 		return
@@ -114,7 +127,7 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 
 	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"cluster_id", "topic"}, nil))
 
-	if (len(query.GroupBy) <= 1) {
+	if len(query.GroupBy) <= 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
 		t.Fail()
 		return
