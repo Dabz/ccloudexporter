@@ -69,7 +69,8 @@ var (
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
 // This function will return the main global query, override queries will not be generated
 func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string) Query {
-	timeFrom := time.Now().Add(time.Duration(Context.Delay*-1) * time.Second) // the last minute might contains data that is not yet finalized
+	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
+	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
 	aggregation := Aggregation{
 		Agg:    "SUM",
