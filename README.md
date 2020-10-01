@@ -64,9 +64,9 @@ export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 ```shell
 docker run \
   -e CCLOUD_API_KEY=$CCLOUD_API_KEY \
-  -e CCLOUD_API_SECRET=$CCLOUD_API_SECRET
-  -e CCLOUD_CLUSTER=lkc-abc123
-  -p 2112:2112
+  -e CCLOUD_API_SECRET=$CCLOUD_API_SECRET \
+  -e CCLOUD_CLUSTER=lkc-abc123 \
+  -p 2112:2112 \
   dabz/ccloudexporter:latest
 ```
 
