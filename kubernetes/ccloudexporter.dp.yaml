@@ -20,10 +20,32 @@ spec:
     metadata:
       labels:
         app: #{cluster}#
+      annotations:
+        ad.datadoghq.com/ccloudexporter.check_names: '["openmetrics"]'
+        ad.datadoghq.com/ccloudexporter.init_configs: '[{}]'
+        ad.datadoghq.com/ccloudexporter.instances: |
+          [
+            {
+              "prometheus_url": "http://%%host%%:2112/metrics",
+              "namespace": "data_infra",
+              "metrics": [
+                "ccloud_metric_active_connection_count",
+                "ccloud_metric_partition_count",
+                "ccloud_metric_request_count",
+                "ccloud_metric_successful_authentication_count",
+
+                "ccloud_metric_sent_bytes",
+                "ccloud_metric_received_bytes",
+                "ccloud_metric_sent_records",
+                "ccloud_metric_received_records",
+                "ccloud_metric_retained_bytes"
+              ]
+            }
+          ]
     spec:
       containers:
       - name: ccloudexporter
-        image: dabz/ccloudexporter:latest
+        image: dabz/ccloudexporter@sha256:0aa2102c3140e9c6a577fbc65786b1efbf8c7394e021b696f6798a4e56d468bc
         envFrom:
           - secretRef:
               name: #{cluster}#-vars

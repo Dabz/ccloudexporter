@@ -1,3 +1,44 @@
+# [Earnin fork] Prometheus exporter for Confluent Cloud Metrics API
+
+This is a third-party, open source project that is forked by Earnin.
+
+At Earnin, this application runs on the dev-eks Kubernetes cluster. The deployment is based on the manifests in the `kubernetes/` directory.
+
+## Deploying to Kubernetes for the first time
+
+Complete the [ccloud_exporter_earnin.env](./ccloud_exporter_earnin.env) file with a Confluent Cloud "cloud "API key.
+
+Then use the included Kubernetes Makefile to deploy:
+
+```
+cd kubernetes
+
+make k8s_deploy_ccloudexporter
+```
+
+Don't `make install`, because that will try to create prometheus-related resources which we don't need.
+
+## Upgrading Kubernetes deployment
+
+Most changes will be made to Deployment manifest in [kubernetes/ccloudexporter.dp.yaml](kubernetes/ccloudexporter.dp.yaml). 
+
+If you need to deploy a change to this file, just run:
+
+```
+cd kubernetes
+
+make k8s_apply_dp
+```
+
+Note that the image is downloaded from DockerHub. The code is not built from this fork. If you want to upgrade to a later version of the upstream application, update the tag for the DockerHub image in [kubernetes/ccloudexporter.dp.yaml](kubernetes/ccloudexporter.dp.yaml). Also consider merging the upstream master branch into this fork (being careful to properly resolve conflicts).
+
+---
+
+Upstream README below.
+
+---
+
+
 # Important information
 
 In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
