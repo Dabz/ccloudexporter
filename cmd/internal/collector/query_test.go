@@ -7,9 +7,7 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import (
-	"testing"
-)
+import "testing"
 import "strings"
 import "time"
 

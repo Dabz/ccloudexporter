@@ -99,7 +99,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	eligibleTopics := make([]string,0)
 	if len(topicFiltering) > 0 && len(excludeTopics) > 0{
 		for _, inTopic := range topicFiltering {
-			if !isWithin(inTopic,excludeTopics) {
+			if !contains(excludeTopics,inTopic) {
 				eligibleTopics = append(eligibleTopics,inTopic)
 			}
 		}
@@ -201,15 +201,4 @@ func SendQuery(query Query) (QueryResponse, error) {
 	json.Unmarshal(body, &response)
 
 	return response, nil
-}
-
-
-// Helper to determine whether an element is within a slice
-func isWithin(candidate string, listOfExclusions []string) bool {
-	for _, excluded := range listOfExclusions {
-		if candidate == excluded {
-			return true
-		}
-	}
-	return false
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/Dabz/ccloudexporter/cmd/internal/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 	"net/http"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
