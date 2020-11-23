@@ -64,7 +64,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 // CollectMetricsForRule collects all metrics for a specific rule
 func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
-	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, rule.excludeTopics)
+	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, rule.ExcludeTopics)
 	log.WithFields(log.Fields{"query": query}).Traceln("The following query has been created")
 	optimizedQuery, additionalLabels := OptimizeQuery(query)
 	log.WithFields(log.Fields{"optimizedQuery": optimizedQuery, "additionalLabels": additionalLabels}).Traceln("Query has been optimized")
@@ -101,7 +101,7 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 			continue METRICSLOOP
 		}
 
-		for _, currentRegex := range rule.excludeTopicsRegex {
+		for _, currentRegex := range rule.ExcludeTopicsRegex {
 			if matchesRegex(topic, currentRegex){
 				continue METRICSLOOP
 			}

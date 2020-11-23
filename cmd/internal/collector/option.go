@@ -125,7 +125,7 @@ func validateConfiguration() {
 			log.Fatalln("Labels is required while defining a rule")
 		}
 
-		for _, currentRegex := range rule.excludeTopicsRegex {
+		for _, currentRegex := range rule.ExcludeTopicsRegex {
 			regexp.MustCompile(currentRegex)
 		}
 	}

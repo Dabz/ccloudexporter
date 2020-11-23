@@ -1,5 +1,7 @@
 package collector
 
+import "testing"
+
 //
 // context_test.go
 // Copyright (C) 2020 gaspar_d </var/spool/mail/gaspar_d>
@@ -7,7 +9,6 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "testing"
 
 var rule1 = Rule{
 	id:            0,

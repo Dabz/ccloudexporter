@@ -165,12 +165,12 @@ func TestBuildQueryWithExcludeTopic(t *testing.T) {
 		return
 	}
 
-	if query.Filter.Filters[1].Filters[0].unaryFilter.Field != "metric.label.topic" {
+	if query.Filter.Filters[1].Filters[0].UnaryFilter.Field != "metric.label.topic" {
 		t.Fail()
 		return
 	}
 
-	if query.Filter.Filters[1].Filters[0].unaryFilter.Value != "excludeTopicSample" {
+	if query.Filter.Filters[1].Filters[0].UnaryFilter.Value != "excludeTopicSample" {
 		t.Fail()
 		return
 	}

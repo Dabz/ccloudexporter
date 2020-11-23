@@ -41,11 +41,11 @@ type FilterHeader struct {
 
 // Filter structure
 type Filter struct {
-	Field   string   `json:"field,omitempty"`
-	Op      string   `json:"op"`
-	Value   string   `json:"value,omitempty"`
-	Filters []Filter `json:"filters,omitempty"`
-	unaryFilter  *Filter   `json:"filter,omitempty"`
+	Field       string   `json:"field,omitempty"`
+	Op          string   `json:"op"`
+	Value       string   `json:"value,omitempty"`
+	Filters     []Filter `json:"filters,omitempty"`
+	UnaryFilter *Filter  `json:"filter,omitempty"`
 }
 
 // QueryResponse from the cloud endpoint
@@ -95,7 +95,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		Filters: clusterFilters,
 	})
 
-	// Remove topics from the topicFiltering list if they also exist in the excludeTopics list
+	// Remove topics from the topicFiltering list if they also exist in the ExcludeTopics list
 	eligibleTopics := make([]string,0)
 	if len(topicFiltering) > 0 && len(excludeTopics) > 0{
 		for _, inTopic := range topicFiltering {
@@ -126,8 +126,8 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 				Value: exTopic,
 			}
 			wrapperNotFilter := Filter{
-				Op: "NOT",
-				unaryFilter: &excludeFilter,
+				Op:          "NOT",
+				UnaryFilter: &excludeFilter,
 			}
 			excludeTopicFilters = append(excludeTopicFilters, wrapperNotFilter)
 		}

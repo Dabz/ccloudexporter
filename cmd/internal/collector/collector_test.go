@@ -97,12 +97,12 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 	}
 
 	var rule = Rule{
-		id:            0,
-		Topics:        []string{"topic"},
-		Clusters:      []string{"cluster"},
-		Metrics:       []string{"metric", "metric2"},
-		GroupByLabels: []string{"topic", "cluster_id"},
-		excludeTopicsRegex: []string{"excludedTopic*","excludedThing*"},
+		id:                 0,
+		Topics:             []string{"topic"},
+		Clusters:           []string{"cluster"},
+		Metrics:            []string{"metric", "metric2"},
+		GroupByLabels:      []string{"topic", "cluster_id"},
+		ExcludeTopicsRegex: []string{"excludedTopic*","excludedThing*"},
 	}
 
 	responseString := `

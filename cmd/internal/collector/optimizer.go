@@ -16,12 +16,12 @@ package collector
 // labels (e.g. cluster_id will be removed if there is only cluster, thus
 // no need to group_by the result)
 func OptimizeQuery(input Query) (Query, map[string]string) {
-	optimizedQuery, optimizedLabel := removeSuperfluousGoupBy(input)
+	optimizedQuery, optimizedLabel := removeSuperfluousGroupBy(input)
 	return optimizedQuery, optimizedLabel
 }
 
 
-func removeSuperfluousGoupBy(input Query) (Query, map[string]string) {
+func removeSuperfluousGroupBy(input Query) (Query, map[string]string) {
 	optimizedGroupByList := make([]string, 0)
 	labels := make(map[string]string)
 	for _, groupBy := range input.GroupBy {

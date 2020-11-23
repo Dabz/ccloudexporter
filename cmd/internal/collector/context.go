@@ -24,8 +24,8 @@ type ExporterContext struct {
 // should collect for a specific set of topics or clusters
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
-	excludeTopics					 []string `mapstructure:"excludeTopics"`
-	excludeTopicsRegex				 []string `mapstructure:"excludeTopicsRegex"`
+	ExcludeTopics                    []string `mapstructure:"ExcludeTopics"`
+	ExcludeTopicsRegex               []string `mapstructure:"ExcludeTopicsRegex"`
 	Clusters                         []string `mapstructure:"clusters"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
