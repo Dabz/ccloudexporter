@@ -8,7 +8,7 @@ config:
   granularity: PT1M
 rules:
   - clusters:
-      - lkc-8y75q
+      - lkc-xxxxx
     metrics:
       - io.confluent.kafka.server/received_bytes
       - io.confluent.kafka.server/sent_bytes
@@ -20,9 +20,9 @@ rules:
       - io.confluent.kafka.server/partition_count
       - io.confluent.kafka.server/successful_authentication_count
     excludeTopics:
-      - MYSTREAM
+      - TEST
     excludeTopicsRegex:
-      - _*
+      - ^(_.+)$
     labels:
       - cluster_id
       - topic
