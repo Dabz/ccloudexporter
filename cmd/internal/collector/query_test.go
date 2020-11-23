@@ -8,7 +8,6 @@ package collector
 //
 
 import (
-	"fmt"
 	"testing"
 )
 import "strings"
@@ -210,7 +209,6 @@ func TestBuildQueryWithIncludeAndExcludeTopic(t *testing.T) {
 	}
 
 	if query.Filter.Filters[1].Filters[0].Value != "topic" {
-		fmt.Println(query.Filter.Filters[1].Filters[0].Value)
 		t.Fail()
 	}
 
@@ -219,7 +217,6 @@ func TestBuildQueryWithIncludeAndExcludeTopic(t *testing.T) {
 	}
 
 	if query.Filter.Filters[1].Filters[1].unaryFilter.Value != "someOtherExcludedTopic" {
-		fmt.Println(query.Filter.Filters[1].Filters[0].Value)
 		t.Fail()
 	}
 }
