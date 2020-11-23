@@ -97,20 +97,13 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 
 	// Remove topics from the topicFiltering list if they also exist in the excludeTopics list
 	eligibleTopics := make([]string,0)
-	eligibleExcludedTopics := make([]string,0)
 	if len(topicFiltering) > 0 && len(excludeTopics) > 0{
 		for _, inTopic := range topicFiltering {
 			if !isWithin(inTopic,excludeTopics) {
 				eligibleTopics = append(eligibleTopics,inTopic)
 			}
 		}
-		for _, outTopic := range excludeTopics {
-			if !isWithin(outTopic,topicFiltering) {
-				eligibleExcludedTopics = append(eligibleExcludedTopics,outTopic)
-			}
-		}
 		topicFiltering = eligibleTopics
-		excludeTopics = eligibleExcludedTopics
 	}
 
 	topicFilters := make([]Filter, 0)
@@ -122,18 +115,28 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		})
 	}
 
-	// Exclude topics filter
-	for _, exTopic := range excludeTopics {
-		excludeFilter := Filter {
-			Field: "metric.label.topic",
-			Op:    "EQ",
-			Value: exTopic,
+	// Exclude topics filter, this isn't necessary if a list of topics is already defined
+	// A list of topics provided is by definition filtering other non-wanted topics
+	if len(topicFiltering) == 0 {
+		excludeTopicFilters := []Filter{}
+		for _, exTopic := range excludeTopics {
+			excludeFilter := Filter {
+				Field: "metric.label.topic",
+				Op:    "EQ",
+				Value: exTopic,
+			}
+			wrapperNotFilter := Filter{
+				Op: "NOT",
+				unaryFilter: &excludeFilter,
+			}
+			excludeTopicFilters = append(excludeTopicFilters, wrapperNotFilter)
 		}
-		wrapperNotFilter := Filter{
-			Op: "NOT",
-			unaryFilter: &excludeFilter,
+		if len(excludeTopicFilters) > 0 {
+			filters = append(filters, Filter{
+				Op:      "AND",
+				Filters: excludeTopicFilters,
+			})
 		}
-		topicFilters = append(topicFilters, wrapperNotFilter)
 	}
 
 	if len(topicFilters) > 0 {

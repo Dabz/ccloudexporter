@@ -192,7 +192,7 @@ func TestBuildQueryWithIncludeAndExcludeTopic(t *testing.T) {
 
 	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, []string{"topic", "excludeTopicSample"}, []string{"excludeTopicSample", "someOtherExcludedTopic"})
 
-	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 2 {
+	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
 	}
 
@@ -209,14 +209,6 @@ func TestBuildQueryWithIncludeAndExcludeTopic(t *testing.T) {
 	}
 
 	if query.Filter.Filters[1].Filters[0].Value != "topic" {
-		t.Fail()
-	}
-
-	if query.Filter.Filters[1].Filters[1].unaryFilter.Field != "metric.label.topic" {
-		t.Fail()
-	}
-
-	if query.Filter.Filters[1].Filters[1].unaryFilter.Value != "someOtherExcludedTopic" {
 		t.Fail()
 	}
 }
