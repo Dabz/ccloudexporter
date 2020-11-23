@@ -118,12 +118,14 @@ If you do not provide a configuration file, the exporter creates one from the pr
 
 #### Rule configuration
 
-| Key                | Description                                                                                                   |
-|--------------------|---------------------------------------------------------------------------------------------------------------|
-| rules.clusters     | List of clusters to fetch metrics from                                                                        |
-| rules.labels       | Labels to exposed to Prometheus and group by in the query                                                     |
-| rules.topics       | Optional list of topics to filter the metrics                                                                 |
-| rules.metrics      | List of metrics to gather                                                                                     |
+| Key                         | Description                                                                                                   |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------|
+| rules.clusters              | List of clusters to fetch metrics from                                                                        |
+| rules.labels                | Labels to exposed to Prometheus and group by in the query                                                     |
+| rules.topics                | Optional list of topics to filter the metrics                                                                 |
+| rules.excludedTopics        | Optional list of topics to exclude from the query                                                             |
+| rules.excludedTopicsRegex   | Optional regex to filter the result of the query                                                              |
+| rules.metrics               | List of metrics to gather                                                                                     |
 
 ### Examples of configuration files
 

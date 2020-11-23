@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
+	"regexp"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -27,7 +27,7 @@ type CCloudCollectorMetric struct {
 	global   bool
 }
 
-// CCloudCollector is a custom prometheu collector to collect data from
+// CCloudCollector is a custom prometheus collector to collect data from
 // Confluent Cloud Metrics API
 type CCloudCollector struct {
 	metrics map[string]CCloudCollectorMetric
@@ -63,7 +63,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 // CollectMetricsForRule collects all metrics for a specific rule
 func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
-	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics)
+	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, rule.excludeTopics)
 	optimizedQuery, additionalLabels := OptimizeQuery(query)
 	durationMetric, _ := ccmetric.duration.GetMetricWithLabelValues(strconv.Itoa(rule.id))
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(durationMetric.Set))
@@ -79,6 +79,7 @@ func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- pr
 
 func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule, additionalLabels map[string]string) {
 	desc := ccmetric.desc
+	METRICSLOOP:
 	for _, dataPoint := range response.Data {
 		// Some data points might need to be ignored if it is the global query
 		topic, topicPresent := dataPoint["metric.label.topic"].(string)
@@ -93,7 +94,13 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 		}
 
 		if topicPresent && clusterPresent && rule.ShouldIgnoreResultForRule(topic, cluster, ccmetric.metric.Name) {
-			continue
+			continue METRICSLOOP
+		}
+
+		for _, currentRegex := range rule.excludeTopicsRegex {
+			if matchesRegex(topic, currentRegex){
+				continue METRICSLOOP
+			}
 		}
 
 		value, ok := dataPoint["value"].(float64)
@@ -133,7 +140,7 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 }
 
 // NewCCloudCollector creates a new instance of the collector
-// During the creation, we invoke the descriptor endpoint to fetcha all
+// During the creation, we invoke the descriptor endpoint to fetch all
 // existing metrics and their labels
 func NewCCloudCollector() CCloudCollector {
 	collector := CCloudCollector{rules: Context.Rules, metrics: make(map[string]CCloudCollectorMetric)}
@@ -185,4 +192,15 @@ func NewCCloudCollector() CCloudCollector {
 	}
 
 	return collector
+}
+
+func matchesRegex (candidate string, regex string) bool {
+	matched, err := regexp.MatchString(regex,candidate)
+	if err != nil {
+		panic(err)
+	}
+	if matched {
+		return true
+	}
+	return false
 }

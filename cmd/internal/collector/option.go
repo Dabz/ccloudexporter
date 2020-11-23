@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/spf13/viper"
 )
@@ -116,6 +117,10 @@ func validateConfiguration() {
 		if len(rule.GroupByLabels) == 0 {
 			fmt.Println("Labels is required while defining a rule")
 			os.Exit(1)
+		}
+
+		for _, currentRegex := range rule.excludeTopicsRegex {
+			regexp.MustCompile(currentRegex)
 		}
 	}
 }

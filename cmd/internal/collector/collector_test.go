@@ -80,3 +80,83 @@ func TestHandleResponse(t *testing.T) {
 	}
 
 }
+
+
+
+func TestHandleResponseForRegexFiltering(t *testing.T) {
+	metric := CCloudCollectorMetric{
+		labels: []string{"topic", "cluster_id"},
+		metric: MetricDescription{Name: "metric"},
+		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "cluster_id"}, nil),
+	}
+
+	collector := CCloudCollector{
+		metrics: map[string]CCloudCollectorMetric{
+			"metric": metric,
+		},
+	}
+
+	var rule = Rule{
+		id:            0,
+		Topics:        []string{"topic"},
+		Clusters:      []string{"cluster"},
+		Metrics:       []string{"metric", "metric2"},
+		GroupByLabels: []string{"topic", "cluster_id"},
+		excludeTopicsRegex: []string{"excludedTopic*","excludedThing*"},
+	}
+
+	responseString := `
+{
+   "data": [
+			{
+					"metric.label.cluster_id": "cluster",
+					"metric.label.topic": "topic",
+					"timestamp": "2020-06-03T13:37:00Z",
+					"value": 1.0
+			},
+			{
+					"metric.label.cluster_id": "cluster",
+					"metric.label.topic": "topic2",
+					"timestamp": "2020-06-03T13:37:00Z",
+					"value": 1.0
+			},
+			{
+					"metric.label.cluster_id": "cluster",
+					"metric.label.topic": "excludedTopicA",
+					"timestamp": "2020-06-03T13:37:00Z",
+					"value": 1.0
+			},
+			{
+					"metric.label.cluster_id": "cluster",
+					"metric.label.topic": "excludedThingB",
+					"timestamp": "2020-06-03T13:37:00Z",
+					"value": 1.0
+			}
+	]
+}`
+
+	responseBytes, err := ioutil.ReadAll(strings.NewReader(responseString))
+	if err != nil {
+		t.Errorf(err.Error())
+		t.Fail()
+		return
+	}
+
+	response := QueryResponse{}
+	err = json.Unmarshal(responseBytes, &response)
+	if err != nil {
+		t.Errorf(err.Error())
+		t.Fail()
+	}
+
+	pchan := make(chan prometheus.Metric, 10)
+
+	collector.handleResponse(response, metric, pchan, rule, make(map[string]string))
+
+	if len(pchan) != 2 {
+		t.Errorf("Invalid number of metrics returned, expected 2 got %d", len(pchan))
+		t.Fail()
+		return
+	}
+
+}

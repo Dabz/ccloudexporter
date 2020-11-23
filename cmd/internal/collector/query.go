@@ -44,6 +44,7 @@ type Filter struct {
 	Op      string   `json:"op"`
 	Value   string   `json:"value,omitempty"`
 	Filters []Filter `json:"filters,omitempty"`
+	unaryFilter  *Filter   `json:"filter,omitempty"`
 }
 
 // QueryResponse from the cloud endpoint
@@ -68,7 +69,7 @@ var (
 
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
 // This function will return the main global query, override queries will not be generated
-func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string) Query {
+func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string, excludeTopics []string) Query {
 	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
@@ -93,6 +94,24 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		Filters: clusterFilters,
 	})
 
+	// Remove topics from the topicFiltering list if they also exist in the excludeTopics list
+	eligibleTopics := make([]string,0)
+	eligibleExcludedTopics := make([]string,0)
+	if len(topicFiltering) > 0 && len(excludeTopics) > 0{
+		for _, inTopic := range topicFiltering {
+			if !isWithin(inTopic,excludeTopics) {
+				eligibleTopics = append(eligibleTopics,inTopic)
+			}
+		}
+		for _, outTopic := range excludeTopics {
+			if !isWithin(outTopic,topicFiltering) {
+				eligibleExcludedTopics = append(eligibleExcludedTopics,outTopic)
+			}
+		}
+		topicFiltering = eligibleTopics
+		excludeTopics = eligibleExcludedTopics
+	}
+
 	topicFilters := make([]Filter, 0)
 	for _, topic := range topicFiltering {
 		topicFilters = append(topicFilters, Filter{
@@ -101,6 +120,21 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 			Value: topic,
 		})
 	}
+
+	// Exclude topics filter
+	for _, exTopic := range excludeTopics {
+		excludeFilter := Filter {
+			Field: "metric.label.topic",
+			Op:    "EQ",
+			Value: exTopic,
+		}
+		wrapperNotFilter := Filter{
+			Op: "NOT",
+			unaryFilter: &excludeFilter,
+		}
+		topicFilters = append(topicFilters, wrapperNotFilter)
+	}
+
 	if len(topicFilters) > 0 {
 		filters = append(filters, Filter{
 			Op:      "OR",
@@ -161,4 +195,15 @@ func SendQuery(query Query) (QueryResponse, error) {
 	json.Unmarshal(body, &response)
 
 	return response, nil
+}
+
+
+// Helper to determine whether an element is within a slice
+func isWithin(candidate string, listOfExclusions []string) bool {
+	for _, excluded := range listOfExclusions {
+		if candidate == excluded {
+			return true
+		}
+	}
+	return false
 }

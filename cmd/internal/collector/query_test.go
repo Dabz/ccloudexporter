@@ -7,7 +7,10 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 import "strings"
 import "time"
 
@@ -23,7 +26,7 @@ func TestBuildQuery(t *testing.T) {
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil)
+	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil, nil)
 
 	if len(query.Filter.Filters) != 1 || len(query.Filter.Filters[0].Filters) != 1 {
 		t.Fail()
@@ -64,7 +67,7 @@ func TestBuildQueryWithTopic(t *testing.T) {
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, []string{"topic"})
+	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, []string{"topic"}, nil)
 
 	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
@@ -104,7 +107,7 @@ func TestOptimizationRemoveSuperfelousGroupBy(t *testing.T) {
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil, nil))
 
 	if len(query.GroupBy) > 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
@@ -125,7 +128,7 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"cluster_id", "topic"}, nil))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"cluster_id", "topic"}, nil, nil))
 
 	if len(query.GroupBy) <= 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
@@ -133,3 +136,92 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 		return
 	}
 }
+
+func TestBuildQueryWithExcludeTopic(t *testing.T) {
+	metric := MetricDescription{
+		Name: "io.confluent.kafka.server/retained_bytes",
+		Labels: []MetricLabel{{
+			Key: "topic",
+		}, {
+			Key: "cluster_id",
+		}, {
+			Key: "partition",
+		}},
+	}
+
+	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, nil, []string{"excludeTopicSample"})
+
+	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
+		t.Fail()
+		return
+	}
+
+	if query.Filter.Filters[0].Filters[0].Field != "metric.label.cluster_id" {
+		t.Fail()
+		return
+	}
+
+	if query.Filter.Filters[0].Filters[0].Value != "cluster" {
+		t.Fail()
+		return
+	}
+
+	if query.Filter.Filters[1].Filters[0].unaryFilter.Field != "metric.label.topic" {
+		t.Fail()
+		return
+	}
+
+	if query.Filter.Filters[1].Filters[0].unaryFilter.Value != "excludeTopicSample" {
+		t.Fail()
+		return
+	}
+}
+
+
+
+func TestBuildQueryWithIncludeAndExcludeTopic(t *testing.T) {
+	metric := MetricDescription{
+		Name: "io.confluent.kafka.server/retained_bytes",
+		Labels: []MetricLabel{{
+			Key: "topic",
+		}, {
+			Key: "cluster_id",
+		}, {
+			Key: "partition",
+		}},
+	}
+
+	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, []string{"topic", "excludeTopicSample"}, []string{"excludeTopicSample", "someOtherExcludedTopic"})
+
+	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 2 {
+		t.Fail()
+	}
+
+	if query.Filter.Filters[0].Filters[0].Field != "metric.label.cluster_id" {
+		t.Fail()
+	}
+
+	if query.Filter.Filters[0].Filters[0].Value != "cluster" {
+		t.Fail()
+	}
+
+	if query.Filter.Filters[1].Filters[0].Field != "metric.label.topic" {
+		t.Fail()
+	}
+
+	if query.Filter.Filters[1].Filters[0].Value != "topic" {
+		fmt.Println(query.Filter.Filters[1].Filters[0].Value)
+		t.Fail()
+	}
+
+	if query.Filter.Filters[1].Filters[1].unaryFilter.Field != "metric.label.topic" {
+		t.Fail()
+	}
+
+	if query.Filter.Filters[1].Filters[1].unaryFilter.Value != "someOtherExcludedTopic" {
+		fmt.Println(query.Filter.Filters[1].Filters[0].Value)
+		t.Fail()
+	}
+}
+
+

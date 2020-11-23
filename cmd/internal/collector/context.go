@@ -24,6 +24,8 @@ type ExporterContext struct {
 // should collect for a specific set of topics or clusters
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
+	excludeTopics					 []string `mapstructure:"excludeTopics"`
+	excludeTopicsRegex				 []string `mapstructure:"excludeTopicsRegex"`
 	Clusters                         []string `mapstructure:"clusters"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
@@ -41,7 +43,7 @@ type TopicClusterMetric struct {
 // Version is the git short SHA1 hash provided at build time
 var Version string = "homecooked"
 
-// Context is the global variable defining the context for the expoter
+// Context is the global variable defining the context for the exporter
 var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
@@ -65,7 +67,7 @@ var DefaultMetrics = []string{
 }
 
 // GetMapOfMetrics returns the whitelist of metrics in a map
-// where the key is the metric and the value is true if it is comming from an override
+// where the key is the metric and the value is true if it is coming from an override
 func (context ExporterContext) GetMapOfMetrics() map[string]bool {
 	mapOfWhiteListedMetrics := make(map[string]bool)
 
