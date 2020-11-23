@@ -8,10 +8,9 @@ package collector
 //
 
 import "strings"
-import "errors"
-import "fmt"
 import "encoding/json"
 import "io/ioutil"
+import log "github.com/sirupsen/logrus"
 
 // DescriptorResponse is the response from Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -69,7 +68,8 @@ func GetNiceNameForMetric(metric MetricDescription) string {
 		}
 	}
 
-	panic(errors.New("Invalid metric: " + metric.Name))
+	log.WithField("metric", metric).Fatalln("Invalid metric")
+	panic(nil)
 }
 
 // SendDescriptorQuery calls the https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors endpoint
@@ -80,18 +80,17 @@ func SendDescriptorQuery() DescriptorResponse {
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatalln("HTTP query for the descriptor endpoint failed")
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
-		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for GET on %s. \n\n%s\n\n", res.StatusCode, endpoint, body)
-		panic(errors.New(errorMsg))
+		log.WithFields(log.Fields{"StatusCode": res.StatusCode, "Endpoint": endpoint, "body": body}).Fatalf("Received status code %d instead of 200 for GET on %s. \n\n%s\n\n", res.StatusCode, endpoint, body)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatalln("Can not read the content of the descriptor query")
 	}
 
 	response := DescriptorResponse{}
