@@ -15,6 +15,7 @@ import (
 	"time"
 	"regexp"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 // CCloudCollectorMetric describes a single Metric from Confluent Cloud
@@ -64,16 +65,19 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
 	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, rule.excludeTopics)
+	log.WithFields(log.Fields{"query": query}).Traceln("The following query has been created")
 	optimizedQuery, additionalLabels := OptimizeQuery(query)
+	log.WithFields(log.Fields{"optimizedQuery": optimizedQuery, "additionalLabels": additionalLabels}).Traceln("Query has been optimized")
 	durationMetric, _ := ccmetric.duration.GetMetricWithLabelValues(strconv.Itoa(rule.id))
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(durationMetric.Set))
 	response, err := SendQuery(optimizedQuery)
 	timer.ObserveDuration()
 	ch <- durationMetric
 	if err != nil {
-		fmt.Println(err.Error())
+		log.WithError(err).WithFields(log.Fields{"optimizedQuery": optimizedQuery, "response": response}).Errorln("Query did not succeed")
 		return
 	}
+	log.WithFields(log.Fields{"response": response}).Traceln("Response has been received")
 	cc.handleResponse(response, ccmetric, ch, rule, additionalLabels)
 }
 
@@ -85,11 +89,11 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 		topic, topicPresent := dataPoint["metric.label.topic"].(string)
 		cluster, clusterPresent := dataPoint["metric.label.cluster_id"].(string)
 
-		if ! clusterPresent {
+		if !clusterPresent {
 			cluster, clusterPresent = additionalLabels["metric.label.cluster_id"]
 		}
 
-		if ! topicPresent {
+		if !topicPresent {
 			topic, topicPresent = additionalLabels["metric.label.topic"]
 		}
 
@@ -105,14 +109,14 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 
 		value, ok := dataPoint["value"].(float64)
 		if !ok {
-			fmt.Println("Can not convert result to float:", dataPoint["value"])
+			log.WithField("datapoint", dataPoint["value"]).Errorln("Can not convert result to float")
 			return
 		}
 
 		labels := []string{}
 		for _, label := range ccmetric.labels {
 			labelValue, labelValuePresent := dataPoint["metric.label."+label].(string)
-			if ! labelValuePresent {
+			if !labelValuePresent {
 				labelValue, labelValuePresent = additionalLabels["metric.label."+label]
 			}
 			labels = append(labels, labelValue)
@@ -130,7 +134,7 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 		} else {
 			timestamp, err := time.Parse(time.RFC3339, fmt.Sprint(dataPoint["timestamp"]))
 			if err != nil {
-				fmt.Println(err.Error())
+				log.WithError(err).Errorln("Can not parse timestamp, ignoring the response")
 				return
 			}
 			metricWithTime := prometheus.NewMetricWithTimestamp(timestamp, metric)
@@ -145,6 +149,7 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 func NewCCloudCollector() CCloudCollector {
 	collector := CCloudCollector{rules: Context.Rules, metrics: make(map[string]CCloudCollectorMetric)}
 	descriptorResponse := SendDescriptorQuery()
+	log.WithField("descriptor response", descriptorResponse).Traceln("The following response for the descriptor endpoint has been received")
 	mapOfWhiteListedMetrics := Context.GetMapOfMetrics()
 
 	for _, metr := range descriptorResponse.Data {
@@ -153,6 +158,7 @@ func NewCCloudCollector() CCloudCollector {
 			continue
 		}
 		delete(mapOfWhiteListedMetrics, metr.Name)
+		metr.Labels = append(metr.Labels, MetricLabel{Key: "cluster_id", Description: "Cluster ID"})
 		var labels []string
 		for _, metrLabel := range metr.Labels {
 			labels = append(labels, metrLabel.Key)
@@ -185,10 +191,7 @@ func NewCCloudCollector() CCloudCollector {
 	}
 
 	if len(mapOfWhiteListedMetrics) > 0 {
-		fmt.Println("WARNING: The following metrics will not be gathered as they are not exposed by the Metrics API:")
-		for key := range mapOfWhiteListedMetrics {
-			fmt.Println("  -", key)
-		}
+		log.WithField("Ignored metrics", mapOfWhiteListedMetrics).Warnln("The following metrics will not be gathered as they are not exposed by the Metrics API")
 	}
 
 	return collector

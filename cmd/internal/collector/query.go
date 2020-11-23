@@ -13,6 +13,7 @@ import "bytes"
 import "errors"
 import "io/ioutil"
 import "encoding/json"
+import log "github.com/sirupsen/logrus"
 
 // Query to Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -168,26 +169,28 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 func SendQuery(query Query) (QueryResponse, error) {
 	jsonQuery, err := json.Marshal(query)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Errorln("Failed serialize query in JSON")
+		return QueryResponse{}, errors.New("Failed serialize query in JSON")
 	}
 	endpoint := Context.HTTPBaseURL + queryURI
 	req := MustGetNewRequest("POST", endpoint, bytes.NewBuffer(jsonQuery))
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		fmt.Printf(err.Error())
+		log.WithError(err).Errorln("Failed to send query")
 		return QueryResponse{}, err
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
-		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for POST on %s with %s. \n\n%s\n\n", res.StatusCode, endpoint, jsonQuery, body)
+		log.WithFields(log.Fields{"StatusCode": res.StatusCode, "Endpoint": endpoint, "body": string(body)}).Errorln("Received invalid response")
+		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for POST on %s (%s)", res.StatusCode, endpoint, string(body))
 		return QueryResponse{}, errors.New(errorMsg)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Printf(err.Error())
+		log.WithError(err).Errorln("Can not read response")
 		return QueryResponse{}, err
 	}
 

@@ -8,12 +8,11 @@ package collector
 //
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"os"
 	"regexp"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -34,8 +33,17 @@ func ParseOption() {
 	flag.StringVar(&Context.Listener, "listener", ":2112", "Listener for the HTTP interface")
 	flag.BoolVar(&Context.NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
 	versionFlag := flag.Bool("version", false, "Print the current version and exit")
+	verboseFlag := flag.Bool("verbose", false, "Print trace level logs to stdout")
 
 	flag.Parse()
+
+	log.SetFormatter(&log.JSONFormatter{PrettyPrint: true})
+	log.SetOutput(os.Stdout)
+	if *verboseFlag {
+		log.SetLevel(log.TraceLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 
 	if *versionFlag {
 		printVersion()
@@ -70,7 +78,8 @@ func MustGetAPIKey() string {
 		return key
 	}
 
-	panic(errors.New("CCLOUD_API_KEY environment variable has not been specified"))
+	log.Fatalln("CCLOUD_API_KEY environment variable has not been specified")
+	panic(nil)
 }
 
 // MustGetAPISecret returns the API Key from environment variables
@@ -86,37 +95,34 @@ func MustGetAPISecret() string {
 		return secret
 	}
 
-	panic(errors.New("CCLOUD_API_SECRET environment variable has not been specified"))
+	log.Fatalln("CCLOUD_API_SECRET environment variable has not been specified")
+	panic(nil)
 }
 
 func validateConfiguration() {
 
 	if !contains(supportedGranularity, Context.Granularity) {
-		fmt.Printf("Granularity %s is invalid \n", Context.Granularity)
-		os.Exit(1)
+		log.WithFields(log.Fields{"granularity": Context.Granularity}).Fatalf("Granularity %s is invalid\n", Context.Granularity)
 	}
 
 	for _, rule := range Context.Rules {
 		if len(rule.Clusters) == 0 {
-			fmt.Println("No cluster ID has been specified in a rule")
+			log.Errorln("No cluster ID has been specified in a rule")
 			flag.Usage()
 			os.Exit(1)
 		}
 
 		if contains(rule.GroupByLabels, "partition") && len(rule.Topics) == 0 {
-			fmt.Println("Topic filtering is required while grouping per partition")
-			os.Exit(1)
+			log.Fatalln("Topic filtering is required while grouping per partition")
 		}
 
 		if len(rule.Topics) > 100 {
-			fmt.Println("A rule can not have more than 100 topics")
-			fmt.Println("Note: Dispatching your topics over multiple rule should fix this issue")
-			os.Exit(1)
+			log.Errorln("A rule can not have more than 100 topics")
+			log.Fatalln("Note: Dispatching your topics over multiple rule should fix this issue")
 		}
 
 		if len(rule.GroupByLabels) == 0 {
-			fmt.Println("Labels is required while defining a rule")
-			os.Exit(1)
+			log.Fatalln("Labels is required while defining a rule")
 		}
 
 		for _, currentRegex := range rule.excludeTopicsRegex {
@@ -131,8 +137,7 @@ func parseConfigFile(configPath string) {
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		fmt.Println("Can not read configuration file")
-		panic(err)
+		log.WithError(err).Fatalln("Can not read configuration file")
 	}
 
 	setIntIfExit(&Context.Delay, "config.delay")
@@ -184,7 +189,7 @@ func setBoolIfExist(destination *bool, key string) {
 }
 
 func printVersion() {
-	fmt.Printf("ccloudexporter: %s\n", Version)
+	log.WithField("version", Version).Println()
 }
 
 func contains(s []string, e string) bool {
