@@ -19,12 +19,12 @@ import log "github.com/sirupsen/logrus"
 // This is the JSON structure for the endpoint
 // https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors
 type Query struct {
-	Aggreations []Aggregation `json:"aggregations"`
-	Filter      FilterHeader  `json:"filter"`
-	Granularity string        `json:"granularity"`
-	GroupBy     []string      `json:"group_by"`
-	Intervals   []string      `json:"intervals"`
-	Limit       int           `json:"limit"`
+	Aggregations []Aggregation `json:"aggregations"`
+	Filter       FilterHeader  `json:"filter"`
+	Granularity  string        `json:"granularity"`
+	GroupBy      []string      `json:"group_by"`
+	Intervals    []string      `json:"intervals"`
+	Limit        int           `json:"limit"`
 }
 
 // Aggregation for a Confluent Cloud API metric
@@ -95,17 +95,6 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		Filters: clusterFilters,
 	})
 
-	// Remove topics from the topicFiltering list if they also exist in the ExcludeTopics list
-	eligibleTopics := make([]string,0)
-	if len(topicFiltering) > 0 && len(excludeTopics) > 0{
-		for _, inTopic := range topicFiltering {
-			if !contains(excludeTopics,inTopic) {
-				eligibleTopics = append(eligibleTopics,inTopic)
-			}
-		}
-		topicFiltering = eligibleTopics
-	}
-
 	topicFilters := make([]Filter, 0)
 	for _, topic := range topicFiltering {
 		topicFilters = append(topicFilters, Filter{
@@ -114,13 +103,19 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 			Value: topic,
 		})
 	}
+	if len(topicFilters) > 0 {
+		filters = append(filters, Filter{
+			Op:      "OR",
+			Filters: topicFilters,
+		})
+	}
 
 	// Exclude topics filter, this isn't necessary if a list of topics is already defined
 	// A list of topics provided is by definition filtering other non-wanted topics
 	if len(topicFiltering) == 0 {
 		excludeTopicFilters := []Filter{}
 		for _, exTopic := range excludeTopics {
-			excludeFilter := Filter {
+			excludeFilter := Filter{
 				Field: "metric.label.topic",
 				Op:    "EQ",
 				Value: exTopic,
@@ -139,13 +134,6 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		}
 	}
 
-	if len(topicFilters) > 0 {
-		filters = append(filters, Filter{
-			Op:      "OR",
-			Filters: topicFilters,
-		})
-	}
-
 	filterHeader := FilterHeader{
 		Op:      "AND",
 		Filters: filters,
@@ -159,12 +147,12 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
-		Filter:      filterHeader,
-		Granularity: Context.Granularity,
-		GroupBy:     groupBy,
-		Limit:       1000,
-		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
+		Aggregations: []Aggregation{aggregation},
+		Filter:       filterHeader,
+		Granularity:  Context.Granularity,
+		GroupBy:      groupBy,
+		Limit:        1000,
+		Intervals:    []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
 	}
 }
 

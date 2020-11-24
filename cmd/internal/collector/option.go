@@ -17,6 +17,7 @@ import (
 )
 
 var supportedGranularity = []string{"PT1M", "PT5M", "PT15M", "PT30M", "PT1H"}
+var RegexList = make([]*regexp.Regexp, 0)
 
 // ParseOption parses options provided by the CLI and the configuration file
 // This function will panic if the options are invalid
@@ -125,9 +126,20 @@ func validateConfiguration() {
 			log.Fatalln("Labels is required while defining a rule")
 		}
 
-		for _, currentRegex := range rule.ExcludeTopicsRegex {
-			regexp.MustCompile(currentRegex)
+		// Fail if a filter both includes and excludes a topic
+		if len(rule.Topics) > 0 && len(rule.ExcludeTopics) > 0 {
+			for _, inTopic := range rule.Topics {
+				if !contains(rule.ExcludeTopics, inTopic) {
+					log.Fatalf("You cannot both include and exclude topic: %s", inTopic)
+				}
+			}
 		}
+
+		for _, currentRegex := range rule.ExcludeTopicsRegex {
+			didCompile := regexp.MustCompile(currentRegex)
+			RegexList = append(RegexList, didCompile)
+		}
+
 	}
 }
 

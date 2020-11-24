@@ -9,13 +9,12 @@ package collector
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
-	"regexp"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 )
 
 // CCloudCollectorMetric describes a single Metric from Confluent Cloud
@@ -83,7 +82,13 @@ func (cc CCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- pr
 
 func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule, additionalLabels map[string]string) {
 	desc := ccmetric.desc
-	METRICSLOOP:
+
+	if len(response.Data) == 1000 {
+		log.Warn("The query returned the maximum amount of data points allowed (1000), " +
+			"you might be missing some data. Try further filtering your ccloudexporter.")
+	}
+
+METRICSLOOP:
 	for _, dataPoint := range response.Data {
 		// Some data points might need to be ignored if it is the global query
 		topic, topicPresent := dataPoint["metric.label.topic"].(string)
@@ -98,14 +103,17 @@ func (cc CCloudCollector) handleResponse(response QueryResponse, ccmetric CCloud
 		}
 
 		if topicPresent && clusterPresent && rule.ShouldIgnoreResultForRule(topic, cluster, ccmetric.metric.Name) {
-			continue METRICSLOOP
+			continue
 		}
 
-		for _, currentRegex := range rule.ExcludeTopicsRegex {
-			if matchesRegex(topic, currentRegex){
-				continue METRICSLOOP
+		if topicPresent {
+			for _, currentRegex := range RegexList {
+				if currentRegex.MatchString(topic) {
+					continue METRICSLOOP
+				}
 			}
 		}
+
 
 		value, ok := dataPoint["value"].(float64)
 		if !ok {
@@ -195,15 +203,4 @@ func NewCCloudCollector() CCloudCollector {
 	}
 
 	return collector
-}
-
-func matchesRegex (candidate string, regex string) bool {
-	matched, err := regexp.MatchString(regex,candidate)
-	if err != nil {
-		panic(err)
-	}
-	if matched {
-		return true
-	}
-	return false
 }

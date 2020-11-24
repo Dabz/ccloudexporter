@@ -20,13 +20,12 @@ func OptimizeQuery(input Query) (Query, map[string]string) {
 	return optimizedQuery, optimizedLabel
 }
 
-
 func removeSuperfluousGroupBy(input Query) (Query, map[string]string) {
 	optimizedGroupByList := make([]string, 0)
 	labels := make(map[string]string)
 	for _, groupBy := range input.GroupBy {
 		filters := equalityFiltering(input.Filter.Filters, groupBy, input.Filter.Op)
-		if (len(filters) != 1) {
+		if len(filters) != 1 {
 			optimizedGroupByList = append(optimizedGroupByList, groupBy)
 		} else {
 			labels[groupBy] = filters[0].Value
@@ -45,7 +44,7 @@ func equalityFiltering(filters []Filter, metric string, parentOp string) []Filte
 			continue
 		}
 
-		if (filter.Field == metric && parentOp == "OR" && filter.Op == "EQ") {
+		if filter.Field == metric && parentOp == "OR" && filter.Op == "EQ" {
 			possibilities = append(possibilities, filter)
 		}
 	}

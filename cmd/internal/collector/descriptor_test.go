@@ -42,5 +42,3 @@ func TestHasLabel(t *testing.T) {
 		t.Fail()
 	}
 }
-
-

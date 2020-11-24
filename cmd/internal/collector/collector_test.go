@@ -81,19 +81,11 @@ func TestHandleResponse(t *testing.T) {
 
 }
 
-
-
 func TestHandleResponseForRegexFiltering(t *testing.T) {
 	metric := CCloudCollectorMetric{
 		labels: []string{"topic", "cluster_id"},
 		metric: MetricDescription{Name: "metric"},
 		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "cluster_id"}, nil),
-	}
-
-	collector := CCloudCollector{
-		metrics: map[string]CCloudCollectorMetric{
-			"metric": metric,
-		},
 	}
 
 	var rule = Rule{
@@ -102,7 +94,18 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 		Clusters:           []string{"cluster"},
 		Metrics:            []string{"metric", "metric2"},
 		GroupByLabels:      []string{"topic", "cluster_id"},
-		ExcludeTopicsRegex: []string{"excludedTopic*","excludedThing*"},
+		ExcludeTopicsRegex: []string{"excludedTopic*", "excludedThing*"},
+	}
+
+	// Compile the Regex
+	Context.Granularity = "PT1M"
+	Context.Rules = []Rule{rule}
+	validateConfiguration()
+
+	collector := CCloudCollector{
+		metrics: map[string]CCloudCollectorMetric{
+			"metric": metric,
+		},
 	}
 
 	responseString := `

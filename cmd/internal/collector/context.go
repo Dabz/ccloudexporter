@@ -25,7 +25,7 @@ type ExporterContext struct {
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
 	ExcludeTopics                    []string `mapstructure:"ExcludeTopics"`
-	ExcludeTopicsRegex               []string `mapstructure:"ExcludeTopicsRegex"`
+	ExcludeTopicsRegex               []string `mapstructure:"topicMetricsLocalFilterRegex"`
 	Clusters                         []string `mapstructure:"clusters"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
