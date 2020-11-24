@@ -124,7 +124,7 @@ If you do not provide a configuration file, the exporter creates one from the pr
 | rules.labels                          | Labels to exposed to Prometheus and group by in the query                                                     |
 | rules.topics                          | Optional list of topics to filter the metrics                                                                 |
 | rules.excludedTopics                  | Optional list of topics to exclude from the query                                                             |
-| rules.topicMetricsLocalFilterRegex    | Optional regex to filter the result of the query locally                                                      |
+| rules.topicMetricsLocalFilterRegex    | Optional regex to filter the result of the query locally. Anything matching the regex will NOT be included.   |
 | rules.metrics                         | List of metrics to gather                                                                                     |
 
 ### Examples of configuration files
