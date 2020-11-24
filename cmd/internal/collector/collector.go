@@ -9,12 +9,13 @@ package collector
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 // CCloudCollectorMetric describes a single Metric from Confluent Cloud
@@ -113,7 +114,6 @@ METRICSLOOP:
 				}
 			}
 		}
-
 
 		value, ok := dataPoint["value"].(float64)
 		if !ok {

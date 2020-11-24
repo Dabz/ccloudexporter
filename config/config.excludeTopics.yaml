@@ -21,7 +21,7 @@ rules:
       - io.confluent.kafka.server/successful_authentication_count
     excludeTopics:
       - TEST
-    excludeTopicsRegex:
+    topicMetricsLocalFilterRegex:
       - ^(_.+)$
     labels:
       - cluster_id
