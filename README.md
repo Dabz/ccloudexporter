@@ -28,23 +28,27 @@ To use the exporter, the following environment variables need to be specified:
 ```
 Usage of ./ccloudexporter:
   -cluster string
-    	Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
+        Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
   -config string
-    	Path to configuration file used to override default behavior of ccloudexporter
+        Path to configuration file used to override default behavior of ccloudexporter
   -delay int
-    	Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
+        Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
   -endpoint string
-    	Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
+        Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
   -granularity string
-    	Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+        Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
   -listener string
-    	Listener for the HTTP interface (default ":2112")
+        Listener for the HTTP interface (default ":2112")
+  -log-pretty-print
+        Pretty print the JSON log output (default true)
   -no-timestamp
-    	Do not propagate the timestamp from the the metrics API to prometheus
+        Do not propagate the timestamp from the the metrics API to prometheus
   -timeout int
-    	Timeout, in second, to use for all REST call with the Metric API (default 60)
+        Timeout, in second, to use for all REST call with the Metric API (default 60)
+  -verbose
+        Print trace level logs to stdout
   -version
-    	Print the current version and exit
+        Print the current version and exit
 ```
 
 ## Examples
