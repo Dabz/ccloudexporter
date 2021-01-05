@@ -33,10 +33,11 @@ func ParseOption() {
 	flag.BoolVar(&Context.NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
 	versionFlag := flag.Bool("version", false, "Print the current version and exit")
 	verboseFlag := flag.Bool("verbose", false, "Print trace level logs to stdout")
+	prettyPrintLogs := flag.Bool("log-pretty-print", true, "Pretty print the JSON log output")
 
 	flag.Parse()
 
-	log.SetFormatter(&log.JSONFormatter{PrettyPrint: true})
+	log.SetFormatter(&log.JSONFormatter{PrettyPrint: *prettyPrintLogs})
 	log.SetOutput(os.Stdout)
 	if *verboseFlag {
 		log.SetLevel(log.TraceLevel)
