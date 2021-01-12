@@ -130,6 +130,7 @@ func (cc KafkaCCloudCollector) handleResponse(response QueryResponse, ccmetric C
 	}
 }
 
+// NewKafkaCCloudCollector create a new Confluent Cloud Kafka collector
 func NewKafkaCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceDescription) KafkaCCloudCollector {
 	collector := KafkaCCloudCollector{
 		rules:    Context.GetKafkaRules(),

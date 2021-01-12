@@ -115,6 +115,7 @@ func (cc ConnectorCCloudCollector) handleResponse(response QueryResponse, ccmetr
 	}
 }
 
+// NewConnectorCCloudCollector create a new Confluent Cloud Connector collector
 func NewConnectorCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceDescription) ConnectorCCloudCollector {
 	collector := ConnectorCCloudCollector{
 		rules:    Context.GetConnectorRules(),

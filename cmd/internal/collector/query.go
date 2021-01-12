@@ -142,7 +142,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 }
 
-// BuildConnectorsQuery creates a new Query for a metric for a specific cluster and time interval
+// BuildConnectorsQuery creates a new Query for a metric for a set of connectors
 // This function will return the main global query, override queries will not be generated
 func BuildConnectorsQuery(metric MetricDescription, connectors []string, resource ResourceDescription) Query {
 	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
@@ -189,6 +189,8 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 	}
 }
 
+// BuildKsqlQuery creates a new Query for a metric for a specific ksql application
+// This function will return the main global query, override queries will not be generated
 func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource ResourceDescription) Query {
 	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
@@ -201,11 +203,11 @@ func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource Reso
 	filters := make([]Filter, 0)
 
 	connectorFilters := make([]Filter, 0)
-	for _, ksqlId := range ksqlAppIds {
+	for _, ksqlID := range ksqlAppIds {
 		connectorFilters = append(connectorFilters, Filter{
 			Field: "resource.ksql.id",
 			Op:    "EQ",
-			Value: ksqlId,
+			Value: ksqlID,
 		})
 	}
 

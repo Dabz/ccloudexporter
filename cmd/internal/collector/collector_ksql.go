@@ -115,6 +115,7 @@ func (cc KsqlCCloudCollector) handleResponse(response QueryResponse, ccmetric CC
 	}
 }
 
+// NewKsqlCCloudCollector create a new Confluent Cloud ksql collector
 func NewKsqlCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceDescription) KsqlCCloudCollector {
 	collector := KsqlCCloudCollector{
 		rules:    Context.GetConnectorRules(),
