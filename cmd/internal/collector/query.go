@@ -7,7 +7,10 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 import "fmt"
 import "bytes"
 import "errors"
@@ -64,12 +67,12 @@ type QueryResponse struct {
 // }
 
 var (
-	queryURI = "/v1/metrics/cloud/query"
+	queryURI = "/v2/metrics/cloud/query"
 )
 
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
 // This function will return the main global query, override queries will not be generated
-func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string) Query {
+func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string, resource ResourceDescription) Query {
 	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
@@ -83,7 +86,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	clusterFilters := make([]Filter, 0)
 	for _, cluster := range clusters {
 		clusterFilters = append(clusterFilters, Filter{
-			Field: "metric.label.cluster_id",
+			Field: "resource.kafka.id",
 			Op:    "EQ",
 			Value: cluster,
 		})
@@ -97,7 +100,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	topicFilters := make([]Filter, 0)
 	for _, topic := range topicFiltering {
 		topicFilters = append(topicFilters, Filter{
-			Field: "metric.label.topic",
+			Field: "metric.topic",
 			Op:    "EQ",
 			Value: topic,
 		})
@@ -117,8 +120,108 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	groupBy := []string{}
 	for _, label := range metric.Labels {
 		if contains(groupByLabels, label.Key) {
-			groupBy = append(groupBy, "metric.label."+label.Key)
+			if resource.hasLabel(label.Key) {
+				groupBy = append(groupBy, "resource."+strings.Replace(label.Key, "_", ".", -1))
+			} else {
+				groupBy = append(groupBy, "metric."+label.Key)
+			}
 		}
+	}
+
+	for _, label := range resource.Labels {
+		groupBy = append(groupBy, "resource."+label.Key)
+	}
+
+	return Query{
+		Aggreations: []Aggregation{aggregation},
+		Filter:      filterHeader,
+		Granularity: Context.Granularity,
+		GroupBy:     groupBy,
+		Limit:       1000,
+		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
+	}
+}
+
+// BuildConnectorsQuery creates a new Query for a metric for a specific cluster and time interval
+// This function will return the main global query, override queries will not be generated
+func BuildConnectorsQuery(metric MetricDescription, connectors []string, resource ResourceDescription) Query {
+	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
+	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
+
+	aggregation := Aggregation{
+		Agg:    "SUM",
+		Metric: metric.Name,
+	}
+
+	filters := make([]Filter, 0)
+
+	connectorFilters := make([]Filter, 0)
+	for _, connector := range connectors {
+		connectorFilters = append(connectorFilters, Filter{
+			Field: "resource.connector.id",
+			Op:    "EQ",
+			Value: connector,
+		})
+	}
+
+	filters = append(filters, Filter{
+		Op:      "OR",
+		Filters: connectorFilters,
+	})
+
+	filterHeader := FilterHeader{
+		Op:      "AND",
+		Filters: filters,
+	}
+
+	groupBy := make([]string, len(resource.Labels))
+	for i, rsrcLabel := range resource.Labels {
+		groupBy[i] = "resource." + rsrcLabel.Key
+	}
+
+	return Query{
+		Aggreations: []Aggregation{aggregation},
+		Filter:      filterHeader,
+		Granularity: Context.Granularity,
+		GroupBy:     groupBy,
+		Limit:       1000,
+		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
+	}
+}
+
+func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource ResourceDescription) Query {
+	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
+	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
+
+	aggregation := Aggregation{
+		Agg:    "SUM",
+		Metric: metric.Name,
+	}
+
+	filters := make([]Filter, 0)
+
+	connectorFilters := make([]Filter, 0)
+	for _, ksqlId := range ksqlAppIds {
+		connectorFilters = append(connectorFilters, Filter{
+			Field: "resource.ksql.id",
+			Op:    "EQ",
+			Value: ksqlId,
+		})
+	}
+
+	filters = append(filters, Filter{
+		Op:      "OR",
+		Filters: connectorFilters,
+	})
+
+	filterHeader := FilterHeader{
+		Op:      "AND",
+		Filters: filters,
+	}
+
+	groupBy := make([]string, len(resource.Labels))
+	for i, rsrcLabel := range resource.Labels {
+		groupBy[i] = "resource." + rsrcLabel.Key
 	}
 
 	return Query{
@@ -136,7 +239,7 @@ func SendQuery(query Query) (QueryResponse, error) {
 	jsonQuery, err := json.Marshal(query)
 	if err != nil {
 		log.WithError(err).Errorln("Failed serialize query in JSON")
-		return QueryResponse{}, errors.New("Failed serialize query in JSON")
+		return QueryResponse{}, errors.New("failed serializing query in JSON")
 	}
 	endpoint := Context.HTTPBaseURL + queryURI
 	req := MustGetNewRequest("POST", endpoint, bytes.NewBuffer(jsonQuery))

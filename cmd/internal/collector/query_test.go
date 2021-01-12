@@ -11,26 +11,38 @@ import "testing"
 import "strings"
 import "time"
 
+var (
+	resource = ResourceDescription{
+		Type:        "kafka",
+		Description: "",
+		Labels: []MetricLabel{
+			{
+				Key: "kafka.id",
+			},
+		},
+	}
+)
+
 func TestBuildQuery(t *testing.T) {
 	metric := MetricDescription{
 		Name: "io.confluent.kafka.server/retained_bytes",
 		Labels: []MetricLabel{{
 			Key: "topic",
 		}, {
-			Key: "cluster_id",
+			Key: "kafka_id",
 		}, {
 			Key: "partition",
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil)
+	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, resource)
 
 	if len(query.Filter.Filters) != 1 || len(query.Filter.Filters[0].Filters) != 1 {
 		t.Fail()
 		return
 	}
 
-	if query.Filter.Filters[0].Filters[0].Field != "metric.label.cluster_id" {
+	if query.Filter.Filters[0].Filters[0].Field != "resource.kafka.id" {
 		t.Fail()
 		return
 	}
@@ -58,20 +70,20 @@ func TestBuildQueryWithTopic(t *testing.T) {
 		Labels: []MetricLabel{{
 			Key: "topic",
 		}, {
-			Key: "cluster_id",
+			Key: "kafka_id",
 		}, {
 			Key: "partition",
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, []string{"topic"})
+	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic", "partition"}, []string{"topic"}, resource)
 
 	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
 		return
 	}
 
-	if query.Filter.Filters[0].Filters[0].Field != "metric.label.cluster_id" {
+	if query.Filter.Filters[0].Filters[0].Field != "resource.kafka.id" {
 		t.Fail()
 		return
 	}
@@ -81,7 +93,7 @@ func TestBuildQueryWithTopic(t *testing.T) {
 		return
 	}
 
-	if query.Filter.Filters[1].Filters[0].Field != "metric.label.topic" {
+	if query.Filter.Filters[1].Filters[0].Field != "metric.topic" {
 		t.Fail()
 		return
 	}
@@ -98,13 +110,13 @@ func TestOptimizationRemoveSuperfelousGroupBy(t *testing.T) {
 		Labels: []MetricLabel{{
 			Key: "topic",
 		}, {
-			Key: "cluster_id",
+			Key: "kafka_id",
 		}, {
 			Key: "partition",
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic"}, nil))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, resource))
 
 	if len(query.GroupBy) > 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
@@ -119,13 +131,13 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 		Labels: []MetricLabel{{
 			Key: "topic",
 		}, {
-			Key: "cluster_id",
+			Key: "kafka_id",
 		}, {
 			Key: "partition",
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"cluster_id", "topic"}, nil))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"kafka_id", "topic"}, nil, resource))
 
 	if len(query.GroupBy) <= 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
