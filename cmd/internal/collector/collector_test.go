@@ -18,14 +18,22 @@ import (
 
 func TestHandleResponse(t *testing.T) {
 	metric := CCloudCollectorMetric{
-		labels: []string{"topic", "cluster_id"},
+		labels: []string{"topic", "kafka_id"},
 		metric: MetricDescription{Name: "metric"},
-		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "cluster_id"}, nil),
+		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "kafka_id"}, nil),
 	}
 
-	collector := CCloudCollector{
+	collector := KafkaCCloudCollector{
 		metrics: map[string]CCloudCollectorMetric{
 			"metric": metric,
+		},
+		resource: ResourceDescription{
+			Type: "kafka",
+			Labels: []MetricLabel{
+				{
+					Key: "kafka.id",
+				},
+			},
 		},
 	}
 
@@ -34,7 +42,7 @@ func TestHandleResponse(t *testing.T) {
 		Topics:        []string{"topic"},
 		Clusters:      []string{"cluster"},
 		Metrics:       []string{"metric", "metric2"},
-		GroupByLabels: []string{"topic", "cluster_id"},
+		GroupByLabels: []string{"topic", "kafka_id"},
 	}
 
 	responseString := `
@@ -42,12 +50,13 @@ func TestHandleResponse(t *testing.T) {
    "data": [
 			{
 					"metric.label.cluster_id": "cluster",
+					"resource.kafka.id": "cluster",
 					"metric.label.topic": "topic",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
 			},
 			{
-					"metric.label.cluster_id": "cluster",
+					"resource.kafka.id": "cluster",
 					"metric.label.topic": "topic2",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
@@ -78,7 +87,6 @@ func TestHandleResponse(t *testing.T) {
 		t.Fail()
 		return
 	}
-
 }
 
 func TestHandleResponseForRegexFiltering(t *testing.T) {
