@@ -8,6 +8,7 @@ package collector
 //
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -37,7 +38,7 @@ func TestBuildQuery(t *testing.T) {
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, resource)
+	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, nil, resource)
 
 	if len(query.Filter.Filters) != 1 || len(query.Filter.Filters[0].Filters) != 1 {
 		t.Fail()
@@ -78,7 +79,7 @@ func TestBuildQueryWithTopic(t *testing.T) {
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic", "partition"}, []string{"topic"}, resource)
+	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic", "partition"}, []string{"topic"}, nil, resource)
 
 	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
@@ -118,7 +119,7 @@ func TestOptimizationRemoveSuperfluousGroupBy(t *testing.T) {
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, resource))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, nil, resource))
 
 	if len(query.GroupBy) > 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
@@ -139,7 +140,7 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 		}},
 	}
 
-	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"kafka_id", "topic"}, nil, resource))
+	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"kafka_id", "topic"}, nil, nil, resource))
 
 	if len(query.GroupBy) <= 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)
@@ -154,20 +155,24 @@ func TestBuildQueryWithExcludeTopic(t *testing.T) {
 		Labels: []MetricLabel{{
 			Key: "topic",
 		}, {
-			Key: "cluster_id",
+			Key: "kafka_id",
 		}, {
 			Key: "partition",
 		}},
 	}
 
-	query := BuildQuery(metric, []string{"cluster"}, []string{"cluster_id", "topic", "partition"}, nil, []string{"excludeTopicSample"})
+	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic", "partition"}, nil, []string{"excludeTopicSample"}, resource)
+
+	fmt.Print(query)
+	fmt.Println()
 
 	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
 		return
 	}
 
-	if query.Filter.Filters[0].Filters[0].Field != "metric.label.cluster_id" {
+	if query.Filter.Filters[0].Filters[0].Field != "resource.kafka.id" {
+		fmt.Print("Fail 2")
 		t.Fail()
 		return
 	}

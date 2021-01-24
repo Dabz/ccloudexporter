@@ -91,9 +91,9 @@ func TestHandleResponse(t *testing.T) {
 
 func TestHandleResponseForRegexFiltering(t *testing.T) {
 	metric := CCloudCollectorMetric{
-		labels: []string{"topic", "cluster_id"},
+		labels: []string{"topic", "kafka_id"},
 		metric: MetricDescription{Name: "metric"},
-		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "cluster_id"}, nil),
+		desc:   prometheus.NewDesc("metric", "help", []string{"topic", "kafka_id"}, nil),
 	}
 
 	var rule = Rule{
@@ -101,7 +101,7 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 		Topics:             []string{"topic"},
 		Clusters:           []string{"cluster"},
 		Metrics:            []string{"metric", "metric2"},
-		GroupByLabels:      []string{"topic", "cluster_id"},
+		GroupByLabels:      []string{"topic", "kafka_id"},
 		ExcludeTopicsRegex: []string{"excludedTopic*", "excludedThing*"},
 	}
 
@@ -110,9 +110,17 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 	Context.Rules = []Rule{rule}
 	validateConfiguration()
 
-	collector := CCloudCollector{
+	collector := KafkaCCloudCollector{
 		metrics: map[string]CCloudCollectorMetric{
 			"metric": metric,
+		},
+		resource: ResourceDescription{
+			Type: "kafka",
+			Labels: []MetricLabel{
+				{
+					Key: "kafka.id",
+				},
+			},
 		},
 	}
 
@@ -120,26 +128,26 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 {
    "data": [
 			{
-					"metric.label.cluster_id": "cluster",
-					"metric.label.topic": "topic",
+					"resource.kafka.id": "cluster",
+					"metric.topic": "topic",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
 			},
 			{
-					"metric.label.cluster_id": "cluster",
-					"metric.label.topic": "topic2",
+					"resource.kafka.id": "cluster",
+					"metric.topic": "topic2",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
 			},
 			{
-					"metric.label.cluster_id": "cluster",
-					"metric.label.topic": "excludedTopicA",
+					"resource.kafka.id": "cluster",
+					"metric.topic": "excludedTopicA",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
 			},
 			{
-					"metric.label.cluster_id": "cluster",
-					"metric.label.topic": "excludedThingB",
+					"resource.kafka.id": "cluster",
+					"metric.topic": "excludedThingB",
 					"timestamp": "2020-06-03T13:37:00Z",
 					"value": 1.0
 			}

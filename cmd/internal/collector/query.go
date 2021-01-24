@@ -120,7 +120,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		excludeTopicFilters := []Filter{}
 		for _, exTopic := range excludeTopics {
 			excludeFilter := Filter{
-				Field: "metric.label.topic",
+				Field: "metric.topic",
 				Op:    "EQ",
 				Value: exTopic,
 			}
@@ -159,7 +159,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -206,7 +206,7 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
