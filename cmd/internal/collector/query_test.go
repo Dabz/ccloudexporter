@@ -8,7 +8,6 @@ package collector
 //
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -163,16 +162,12 @@ func TestBuildQueryWithExcludeTopic(t *testing.T) {
 
 	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic", "partition"}, nil, []string{"excludeTopicSample"}, resource)
 
-	fmt.Print(query)
-	fmt.Println()
-
 	if len(query.Filter.Filters) != 2 || len(query.Filter.Filters[1].Filters) != 1 {
 		t.Fail()
 		return
 	}
 
 	if query.Filter.Filters[0].Filters[0].Field != "resource.kafka.id" {
-		fmt.Print("Fail 2")
 		t.Fail()
 		return
 	}
