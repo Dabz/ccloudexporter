@@ -160,7 +160,7 @@ rules:
       - io.confluent.kafka.server/partition_count
       - io.confluent.kafka.server/successful_authentication_count
     labels:
-      - cluster_id
+      - kafka_id
       - topic
       - type
 ```
