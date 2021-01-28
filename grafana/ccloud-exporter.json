@@ -1689,7 +1689,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "ccloud_metric_connector_received_records{connector_kafka_id=~\"$cluster\"}}",
+              "expr": "ccloud_metric_connector_received_records{connector_kafka_id=~\"$cluster\"}",
               "interval": "",
               "legendFormat": "{{connector_kafka_id}} -- {{connector_id}}",
               "queryType": "randomWalk",

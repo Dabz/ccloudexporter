@@ -50,7 +50,7 @@ var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
 var DefaultGroupingLabels = []string{
-	"cluster_id",
+	"kafka.id",
 	"topic",
 	"type",
 }

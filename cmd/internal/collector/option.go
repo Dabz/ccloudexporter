@@ -146,7 +146,7 @@ func parseConfigFile(configPath string) {
 	viper.UnmarshalKey("rules", &Context.Rules)
 	for i, rule := range Context.Rules {
 		rule.id = i
-		Context.Rules[i] = rule
+		Context.Rules[i] = upgradeRuleIfRequired(rule)
 	}
 }
 
@@ -158,6 +158,18 @@ func createDefaultRule(cluster string) {
 		Metrics:       DefaultMetrics,
 		GroupByLabels: DefaultGroupingLabels,
 	}
+}
+
+func upgradeRuleIfRequired(rule Rule) Rule {
+	for i, labelsToGroupBy := range(rule.GroupByLabels) {
+		// In Metrics API v2, label.cluster_id has been replaced by
+		// ressource.kafka.id
+		if labelsToGroupBy == "cluster_id" {
+			rule.GroupByLabels[i] = "kafka.id"
+		}
+	}
+
+	return rule
 }
 
 func setStringIfExit(destination *string, key string) {

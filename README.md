@@ -1,10 +1,9 @@
 # Important information
 
-In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
-Nowadays, only the API key/secret is officially supported to connect to the Metrics API.
-
-To ensure backward compatibility, previous environment variables are still available.
-Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
+The exporter has been upgraded to leverage the V2 of the Metrics API.
+In the V2, `cluster_id` labels has been renamed `kafka_id`.
+Upgrading to the latest version of the exporter will certainly break your dashboard.
+You need to rename `cluster_id` to `kafka_id` in your dashboards.
 
 # Prometheus exporter for Confluent Cloud Metrics API
 
@@ -124,7 +123,9 @@ If you do not provide a configuration file, the exporter creates one from the pr
 
 | Key                | Description                                                                                                   |
 |--------------------|---------------------------------------------------------------------------------------------------------------|
-| rules.clusters     | List of clusters to fetch metrics from                                                                        |
+| rules.clusters     | List of Kafka clusters to fetch metrics for                                                                   |
+| rules.connectors   | List of connectors to fetch metrics for                                                                       |
+| rules.ksqls        | List of ksqlDB applications to fetch metrics for                                                              |
 | rules.labels       | Labels to exposed to Prometheus and group by in the query                                                     |
 | rules.topics       | Optional list of topics to filter the metrics                                                                 |
 | rules.metrics      | List of metrics to gather                                                                                     |
@@ -183,3 +184,22 @@ go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 A Grafana dashboard is provided in [./grafana/](./grafana) folder.
 
 ![Grafana Screenshot](./grafana/grafana.png)
+
+# Deprecated configuration
+
+## cluster_id is deprecated
+
+Metrics API v1 exposed the ID of the cluster with the label `label.cluster_id`, and it was exposed as `cluster_id` by the exporter.
+In the V2, this label has been renamed to `resource.kafka.id`. It is now exposed by the exporter as `kafka_id` instead.
+
+Upgrading to the latest version of the exporter will certainly break your dashboard as you will need to rename `cluster_id` to `kafka_id`.
+
+## Username/Password authentication is deprecated
+
+In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
+Nowadays, only the API key/secret is officially supported to connect to the Metrics API.
+
+To ensure backward compatibility, previous environment variables are still available.
+Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
+
+
