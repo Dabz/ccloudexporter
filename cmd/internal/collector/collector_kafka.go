@@ -101,6 +101,10 @@ func (cc KafkaCCloudCollector) handleResponse(response QueryResponse, ccmetric C
 
 		labels := []string{}
 		for _, label := range ccmetric.labels {
+			// For compatibility reason, kafka_id label is also added as cluster_id
+			if label == "cluster_id" {
+				label = "kafka_id"
+			}
 			name := cc.resource.datapointFieldNameForLabel(label)
 			labelValue, labelValuePresent := dataPoint[name].(string)
 			if !labelValuePresent {
@@ -152,6 +156,10 @@ func NewKafkaCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceD
 		var labels []string
 		for _, rsrcLabel := range resource.Labels {
 			labels = append(labels, GetPrometheusNameForLabel(rsrcLabel.Key))
+			// For retro-compatibility, kafka_id is also exposed as cluster_id
+			if rsrcLabel.Key == "kafka.id" {
+				labels = append(labels, "cluster_id")
+			}
 		}
 		for _, metrLabel := range metr.Labels {
 			labels = append(labels, metrLabel.Key)

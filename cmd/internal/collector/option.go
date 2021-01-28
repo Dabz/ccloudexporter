@@ -161,7 +161,7 @@ func createDefaultRule(cluster string) {
 }
 
 func upgradeRuleIfRequired(rule Rule) Rule {
-	for i, labelsToGroupBy := range(rule.GroupByLabels) {
+	for i, labelsToGroupBy := range rule.GroupByLabels {
 		// In Metrics API v2, label.cluster_id has been replaced by
 		// ressource.kafka.id
 		if labelsToGroupBy == "cluster_id" {

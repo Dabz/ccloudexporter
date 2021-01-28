@@ -1,10 +1,3 @@
-# Important information
-
-The exporter has been upgraded to leverage the V2 of the Metrics API.
-In the V2, `cluster_id` labels has been renamed `kafka_id`.
-Upgrading to the latest version of the exporter will certainly break your dashboard.
-You need to rename `cluster_id` to `kafka_id` in your dashboards.
-
 # Prometheus exporter for Confluent Cloud Metrics API
 
 A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
@@ -189,10 +182,10 @@ A Grafana dashboard is provided in [./grafana/](./grafana) folder.
 
 ## cluster_id is deprecated
 
-Metrics API v1 exposed the ID of the cluster with the label `label.cluster_id`, and it was exposed as `cluster_id` by the exporter.
-In the V2, this label has been renamed to `resource.kafka.id`. It is now exposed by the exporter as `kafka_id` instead.
+Historically, the exporter and the Metrics API exposed the ID of the cluster with the label `cluster_id`.
+In the Metrics API V2, this label has been renamed to `resource.kafka.id`. It is now exposed by the exporter as `kafka_id` instead.
 
-Upgrading to the latest version of the exporter will certainly break your dashboard as you will need to rename `cluster_id` to `kafka_id`.
+To avoid breaking previous dashboard, the exporter is exposing, for the moment, the ID of the cluster as `cluster_id` and `kafka_id`.
 
 ## Username/Password authentication is deprecated
 
