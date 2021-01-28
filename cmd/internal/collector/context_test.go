@@ -71,8 +71,8 @@ func TestGetMapOfMetrics(t *testing.T) {
 		Rules: []Rule{rule1, rule2},
 	}
 
-	if len(Context.GetMapOfMetrics()) != 3 {
-		t.Errorf("Unexpected number of metric returned: %+v", Context.GetMapOfMetrics())
+	if len(Context.GetMapOfMetrics("")) != 3 {
+		t.Errorf("Unexpected number of metric returned: %+v", Context.GetMapOfMetrics(""))
 		t.Fail()
 	}
 }

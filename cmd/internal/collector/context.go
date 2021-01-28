@@ -7,6 +7,8 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
+import "strings"
+
 // ExporterContext define the global context for ccloudexporter
 // This global variables define all timeout, user configuration,
 // and cluster information
@@ -25,6 +27,8 @@ type ExporterContext struct {
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
 	Clusters                         []string `mapstructure:"clusters"`
+	Connectors                       []string `mapstructure:"connectors"`
+	Ksql                             []string `mapstructure:"ksqls"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
 	cachedIgnoreGlobalResultForTopic map[TopicClusterMetric]bool
@@ -39,14 +43,14 @@ type TopicClusterMetric struct {
 }
 
 // Version is the git short SHA1 hash provided at build time
-var Version string = "homecooked"
+var Version = "homecooked"
 
 // Context is the global variable defining the context for the expoter
 var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
 var DefaultGroupingLabels = []string{
-	"cluster_id",
+	"kafka.id",
 	"topic",
 	"type",
 }
@@ -66,12 +70,14 @@ var DefaultMetrics = []string{
 
 // GetMapOfMetrics returns the whitelist of metrics in a map
 // where the key is the metric and the value is true if it is comming from an override
-func (context ExporterContext) GetMapOfMetrics() map[string]bool {
+func (context ExporterContext) GetMapOfMetrics(prefix string) map[string]bool {
 	mapOfWhiteListedMetrics := make(map[string]bool)
 
 	for _, rule := range Context.Rules {
 		for _, metric := range rule.Metrics {
-			mapOfWhiteListedMetrics[metric] = true
+			if strings.HasPrefix(metric, prefix) {
+				mapOfWhiteListedMetrics[metric] = true
+			}
 		}
 	}
 
@@ -90,6 +96,42 @@ func (context ExporterContext) GetMetrics() []string {
 	}
 
 	return metrics
+}
+
+// GetKafkaRules return all rules associated to a Kafka cluster
+func (context ExporterContext) GetKafkaRules() []Rule {
+	kafkaRules := make([]Rule, 0)
+	for _, irule := range Context.Rules {
+		if len(irule.Clusters) >= 0 {
+			kafkaRules = append(kafkaRules, irule)
+		}
+	}
+
+	return kafkaRules
+}
+
+// GetConnectorRules return all rules associated to at least one connector
+func (context ExporterContext) GetConnectorRules() []Rule {
+	connectorRule := make([]Rule, 0)
+	for _, irule := range Context.Rules {
+		if len(irule.Connectors) >= 0 {
+			connectorRule = append(connectorRule, irule)
+		}
+	}
+
+	return connectorRule
+}
+
+// GetKsqlRules return all rules associated to at least one ksql application
+func (context ExporterContext) GetKsqlRules() []Rule {
+	ksqlRules := make([]Rule, 0)
+	for _, irule := range Context.Rules {
+		if len(irule.Ksql) >= 0 {
+			ksqlRules = append(ksqlRules, irule)
+		}
+	}
+
+	return ksqlRules
 }
 
 // ShouldIgnoreResultForRule returns true if the result for this topic need to be ignored for this rule.
