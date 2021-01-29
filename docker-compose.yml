@@ -17,4 +17,6 @@ services:
     environment:
       CCLOUD_API_KEY: ${CCLOUD_API_KEY}
       CCLOUD_API_SECRET: ${CCLOUD_API_SECRET}
-    command: ["-cluster", "${CCLOUD_CLUSTER}"]
+      CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
+      CCLOUD_CONNECTOR: ${CCLOUD_CONNECTOR}
+      CCLOUD_KSQL: ${CCLOUD_KSQL}

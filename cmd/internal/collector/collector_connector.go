@@ -44,8 +44,8 @@ func (cc ConnectorCCloudCollector) Collect(ch chan<- prometheus.Metric, wg *sync
 				continue
 			}
 
-			if len(rule.Clusters) <= 0 {
-				log.WithFields(log.Fields{"rule": rule}).Errorln("Kafka rule has no cluster specified")
+			if len(rule.Connectors) <= 0 {
+				log.WithFields(log.Fields{"rule": rule}).Errorln("connector rule has no cluster specified")
 				continue
 			}
 

@@ -12,7 +12,7 @@ To use the exporter, the following environment variables need to be specified:
 ## Usage
 
 ```shell
-./ccloudexporter -cluster <cluster_id>
+./ccloudexporter [-cluster <cluster_id>] [-connector <connector_id>] [-ksqlDB <app_id>]
 ```
 
 ### Options
@@ -20,27 +20,31 @@ To use the exporter, the following environment variables need to be specified:
 ```
 Usage of ./ccloudexporter:
   -cluster string
-        Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
+    	Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
   -config string
-        Path to configuration file used to override default behavior of ccloudexporter
+    	Path to configuration file used to override default behavior of ccloudexporter
+  -connector string
+    	Comma separated list of connector ID to fetch metric for. If not specified, the environment variable CCLOUD_CONNECTOR will be used
   -delay int
-        Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
+    	Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
   -endpoint string
-        Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
+    	Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
   -granularity string
-        Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+    	Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+  -ksqlDB string
+    	Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used
   -listener string
-        Listener for the HTTP interface (default ":2112")
+    	Listener for the HTTP interface (default ":2112")
   -log-pretty-print
-        Pretty print the JSON log output (default true)
+    	Pretty print the JSON log output (default true)
   -no-timestamp
-        Do not propagate the timestamp from the the metrics API to prometheus
+    	Do not propagate the timestamp from the the metrics API to prometheus
   -timeout int
-        Timeout, in second, to use for all REST call with the Metric API (default 60)
+    	Timeout, in second, to use for all REST call with the Metric API (default 60)
   -verbose
-        Print trace level logs to stdout
+    	Print trace level logs to stdout
   -version
-        Print the current version and exit
+    	Print the current version and exit
 ```
 
 ## Examples
@@ -142,6 +146,10 @@ config:
 rules:
   - clusters:
       - $CCLOUD_CLUSTER
+    connectors:
+      - $CCLOUD_CONNECTOR
+    ksqls:
+      - $CCLOUD_KSQL
     metrics:
       - io.confluent.kafka.server/received_bytes
       - io.confluent.kafka.server/sent_bytes
@@ -152,6 +160,12 @@ rules:
       - io.confluent.kafka.server/request_count
       - io.confluent.kafka.server/partition_count
       - io.confluent.kafka.server/successful_authentication_count
+      - io.confluent.kafka.connect/sent_bytes
+      - io.confluent.kafka.connect/received_bytes
+      - io.confluent.kafka.connect/received_records
+      - io.confluent.kafka.connect/sent_records
+      - io.confluent.kafka.connect/dead_letter_queue_records
+      - io.confluent.kafka.ksql/streaming_unit_count
     labels:
       - kafka_id
       - topic
