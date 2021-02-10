@@ -344,7 +344,7 @@
     },
     {
       "datasource": "${DS_PROMETHEUS}",
-      "description": "Basic clusters have a max retained bytes limit of 5 TB.",
+      "description": "Basic clusters have a max retained bytes limit of 5 TB prior to replication. ccloud_metrics_retained_bytes is after replication thus needs to be divided by 3.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -399,7 +399,7 @@
       "pluginVersion": "7.3.7",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
+          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})/3",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
