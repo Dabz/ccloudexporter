@@ -14,7 +14,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.3.6"
+      "version": "7.3.7"
     },
     {
       "type": "panel",
@@ -52,7 +52,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1610467085733,
+  "iteration": 1612973615263,
   "links": [],
   "panels": [
     {
@@ -71,6 +71,7 @@
     },
     {
       "datasource": "${DS_PROMETHEUS}",
+      "description": "The sum of partitions in a cluster. Basic cluster max partitions limit is 2048.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -78,10 +79,10 @@
           },
           "custom": {},
           "mappings": [],
-          "max": 10000,
+          "max": 2048,
           "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -89,11 +90,11 @@
               },
               {
                 "color": "#EAB839",
-                "value": 4000
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 10000
+                "value": 90
               }
             ]
           },
@@ -122,7 +123,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
           "expr": "sum(ccloud_metric_partition_count{kafka_id=~\"$cluster\"})",
@@ -134,11 +135,12 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Partition count",
+      "title": "Partition count ",
       "type": "stat"
     },
     {
       "datasource": "${DS_PROMETHEUS}",
+      "description": "Per-second average rate of ingress of data to topics, basic cluster has a max of 100MBps.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -146,10 +148,10 @@
           },
           "custom": {},
           "mappings": [],
-          "max": 5000000000,
+          "max": 100000000,
           "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -157,11 +159,11 @@
               },
               {
                 "color": "#EAB839",
-                "value": 4000000000
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 5000000000
+                "value": 90
               }
             ]
           },
@@ -173,142 +175,6 @@
         "h": 5,
         "w": 3,
         "x": 3,
-        "y": 1
-      },
-      "id": 8,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "7.3.6",
-      "targets": [
-        {
-          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "{{cluster}}",
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Current topic bytes retained",
-      "type": "stat"
-    },
-    {
-      "datasource": "${DS_PROMETHEUS}",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {},
-          "mappings": [],
-          "max": 25000000,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 1000000
-              },
-              {
-                "color": "red",
-                "value": 2500000
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 6,
-        "y": 1
-      },
-      "id": 10,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "7.3.6",
-      "targets": [
-        {
-          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
-          "interval": "",
-          "legendFormat": "{{cluster}}",
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Current read of topics ",
-      "type": "stat"
-    },
-    {
-      "datasource": "${DS_PROMETHEUS}",
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {},
-          "mappings": [],
-          "max": 25000000,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 1000000
-              },
-              {
-                "color": "red",
-                "value": 2500000
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 9,
         "y": 1
       },
       "id": 17,
@@ -326,10 +192,10 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_received_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
+          "expr": "rate(ccloud_metric_received_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"}[$__rate_interval])",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -337,11 +203,12 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Write on topics (avg)",
+      "title": "Write on topics (rate)",
       "type": "stat"
     },
     {
       "datasource": "${DS_PROMETHEUS}",
+      "description": "Per-second average rate of egress data to topics, basic cluster has a max of 100MBps.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -349,10 +216,10 @@
           },
           "custom": {},
           "mappings": [],
-          "max": 25000000,
+          "max": 100000000,
           "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -360,11 +227,11 @@
               },
               {
                 "color": "#EAB839",
-                "value": 1000000
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 2500000
+                "value": 90
               }
             ]
           },
@@ -375,7 +242,7 @@
       "gridPos": {
         "h": 5,
         "w": 3,
-        "x": 12,
+        "x": 6,
         "y": 1
       },
       "id": 18,
@@ -393,10 +260,10 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_sent_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
+          "expr": "rate(ccloud_metric_sent_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"}[$__rate_interval])",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -404,11 +271,12 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Read of topics (avg)",
+      "title": "Read of topics (rate)",
       "type": "stat"
     },
     {
       "datasource": "${DS_PROMETHEUS}",
+      "description": "Per-second average rate of requests, basic cluster maxes out at 1500 requests per second.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -416,10 +284,10 @@
           },
           "custom": {},
           "mappings": [],
-          "max": 25000000,
+          "max": 1500,
           "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -427,11 +295,79 @@
               },
               {
                 "color": "#EAB839",
-                "value": 1000000
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 2500000
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 9,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.3.7",
+      "targets": [
+        {
+          "expr": "sum(rate(ccloud_metric_request_count{type=~\".*\", kafka_id=~\"$cluster\"}[$__rate_interval]))",
+          "interval": "",
+          "legendFormat": "{{cluster}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Requests (rate)",
+      "type": "stat"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "description": "Basic clusters have a max retained bytes limit of 5 TB.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "max": 5000000000000,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
               }
             ]
           },
@@ -442,7 +378,7 @@
       "gridPos": {
         "h": 5,
         "w": 3,
-        "x": 15,
+        "x": 12,
         "y": 1
       },
       "id": 12,
@@ -460,10 +396,10 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
-          "expr": "sum(ccloud_metric_received_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
+          "expr": "sum(ccloud_metric_retained_bytes{topic=~\"$topic\", kafka_id=~\"$cluster\"})",
           "interval": "",
           "legendFormat": "{{cluster}}",
           "refId": "A"
@@ -471,11 +407,82 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Current write on topics",
+      "title": "Retained bytes ",
       "type": "stat"
     },
     {
       "datasource": "${DS_PROMETHEUS}",
+      "description": "Basic clusters have a limit on the number of partitions that can be created and deleted in a 5 minute period. This single stat provides the absolute difference between the number of partitions are the beginning and end of the 5 minute period. This over simplifies the problem, so more conservative thresholds are put in place. ",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": 0,
+          "mappings": [],
+          "max": 250,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 15,
+        "y": 1
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.3.7",
+      "targets": [
+        {
+          "expr": "abs(delta(ccloud_metric_partition_count{kafka_id=~\"$cluster\"}[5m]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{cluster}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Partition count change (delta)",
+      "type": "stat"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "description": "The average active connections to a cluster. Basic clusters limit active connections to 1000.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -484,10 +491,10 @@
           "custom": {},
           "displayName": "",
           "mappings": [],
-          "max": 100,
+          "max": 1000,
           "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -495,11 +502,11 @@
               },
               {
                 "color": "#EAB839",
-                "value": 100
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 1000
+                "value": 90
               }
             ]
           },
@@ -528,7 +535,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
           "expr": "avg(ccloud_metric_active_connection_count{kafka_id=~\"$cluster\"})",
@@ -596,7 +603,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "targets": [
         {
           "expr": "avg(ccloud_metrics_api_request_latency)",
@@ -669,7 +676,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -706,6 +713,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:53",
           "decimals": null,
           "format": "decbytes",
           "label": null,
@@ -715,6 +723,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:54",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -768,7 +777,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -869,7 +878,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -967,7 +976,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1066,7 +1075,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1169,7 +1178,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.3.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1230,7 +1239,7 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
+      "datasource": "${DS_PROMETHEUS}",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1266,7 +1275,7 @@
             "h": 3,
             "w": 11,
             "x": 0,
-            "y": 8
+            "y": 37
           },
           "id": 39,
           "options": {
@@ -1283,7 +1292,7 @@
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "targets": [
             {
               "expr": "ccloud_metric_connector_dead_letter_queue_records{connector_kafka_id=~\"$cluster\"}",
@@ -1321,7 +1330,7 @@
             "h": 3,
             "w": 7,
             "x": 11,
-            "y": 8
+            "y": 37
           },
           "id": 40,
           "options": {
@@ -1338,7 +1347,7 @@
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "targets": [
             {
               "expr": "count(ccloud_metric_connector_dead_letter_queue_records{connector_kafka_id=~\"$cluster\"})",
@@ -1371,7 +1380,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 11
+            "y": 40
           },
           "hiddenSeries": false,
           "id": 35,
@@ -1391,7 +1400,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1467,7 +1476,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 11
+            "y": 40
           },
           "hiddenSeries": false,
           "id": 38,
@@ -1487,7 +1496,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1563,7 +1572,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 20
+            "y": 49
           },
           "hiddenSeries": false,
           "id": 37,
@@ -1583,7 +1592,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1659,7 +1668,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 20
+            "y": 49
           },
           "hiddenSeries": false,
           "id": 36,
@@ -1679,7 +1688,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1743,7 +1752,7 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
+      "datasource": "${DS_PROMETHEUS}",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1779,7 +1788,7 @@
             "h": 5,
             "w": 4,
             "x": 0,
-            "y": 9
+            "y": 38
           },
           "id": 44,
           "options": {
@@ -1796,7 +1805,7 @@
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "targets": [
             {
               "expr": "ccloud_metric_ksql_streaming_unit_count",
@@ -1838,7 +1847,7 @@
             "h": 5,
             "w": 4,
             "x": 4,
-            "y": 9
+            "y": 38
           },
           "id": 45,
           "options": {
@@ -1855,7 +1864,7 @@
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "targets": [
             {
               "expr": "count(ccloud_metric_ksql_streaming_unit_count)",
@@ -1939,7 +1948,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 10
+            "y": 39
           },
           "hiddenSeries": false,
           "id": 27,
@@ -1959,7 +1968,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -2078,7 +2087,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 10
+            "y": 39
           },
           "hiddenSeries": false,
           "id": 28,
@@ -2098,7 +2107,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.3.7",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -2223,7 +2232,7 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -2243,5 +2252,5 @@
   "timezone": "",
   "title": "Confluent Cloud",
   "uid": "fhX5408Zk",
-  "version": 5
+  "version": 2
 }
