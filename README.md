@@ -1,7 +1,8 @@
 # Prometheus exporter for Confluent Cloud Metrics API
 
-A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
-By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112).
+A simple Prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
+By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112).  When launching with Docker Compose, metrics are displayed via a Grafana dashboard on [http://localhost:3000](http://localhost:3000) (`admin`/`admin`).
+
 To use the exporter, the following environment variables need to be specified:
 
 * `CCLOUD_API_KEY`: The API Key created with `ccloud api-key create --resource cloud`
@@ -78,6 +79,8 @@ export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 export CCLOUD_CLUSTER=lkc-abc123
 docker-compose up -d
 ```
+In addition to the metrics exporter and Prometheus containers, the Docker Compose launch starts a [Grafana](https://github.com/grafana/grafana) on [http://localhost:3000](http://localhost:3000) (`admin`/`admin`).  The launch pre-provisions a Prometheus datasource for the Confluent Cloud metrics and a default dashboard.
+
 
 ### Using Kubernetes
 
