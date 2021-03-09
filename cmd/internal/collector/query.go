@@ -158,7 +158,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -205,7 +205,7 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -258,53 +258,6 @@ func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource Reso
 		GroupBy:     groupBy,
 		Limit:       1000,
 		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
-	}
-}
-
-// BuildKsqlQuery creates a new Query for a metric for a specific ksql application
-// This function will return the main global query, override queries will not be generated
-func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource ResourceDescription) Query {
-	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
-	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
-
-	aggregation := Aggregation{
-		Agg:    "SUM",
-		Metric: metric.Name,
-	}
-
-	filters := make([]Filter, 0)
-
-	connectorFilters := make([]Filter, 0)
-	for _, ksqlID := range ksqlAppIds {
-		connectorFilters = append(connectorFilters, Filter{
-			Field: "resource.ksql.id",
-			Op:    "EQ",
-			Value: ksqlID,
-		})
-	}
-
-	filters = append(filters, Filter{
-		Op:      "OR",
-		Filters: connectorFilters,
-	})
-
-	filterHeader := FilterHeader{
-		Op:      "AND",
-		Filters: filters,
-	}
-
-	groupBy := make([]string, len(resource.Labels))
-	for i, rsrcLabel := range resource.Labels {
-		groupBy[i] = "resource." + rsrcLabel.Key
-	}
-
-	return Query{
-		Aggregations: []Aggregation{aggregation},
-		Filter:       filterHeader,
-		Granularity:  Context.Granularity,
-		GroupBy:      groupBy,
-		Limit:        1000,
-		Intervals:    []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
 	}
 }
 

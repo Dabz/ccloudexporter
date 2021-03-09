@@ -25,18 +25,6 @@ var (
 	}
 )
 
-var (
-	resource = ResourceDescription{
-		Type:        "kafka",
-		Description: "",
-		Labels: []MetricLabel{
-			{
-				Key: "kafka.id",
-			},
-		},
-	}
-)
-
 func TestBuildQuery(t *testing.T) {
 	metric := MetricDescription{
 		Name: "io.confluent.kafka.server/retained_bytes",
@@ -191,7 +179,7 @@ func TestBuildQueryWithExcludeTopic(t *testing.T) {
 		return
 	}
 
-	if query.Filter.Filters[1].Filters[0].UnaryFilter.Field != "metric.label.topic" {
+	if query.Filter.Filters[1].Filters[0].UnaryFilter.Field != "metric.topic" {
 		t.Fail()
 		return
 	}
