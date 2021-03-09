@@ -209,4 +209,9 @@ Nowadays, only the API key/secret is officially supported to connect to the Metr
 To ensure backward compatibility, previous environment variables are still available.
 Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
 
+# See Also
+
+For an example that showcases how to monitor Apache Kafka client applications, and steps through various failure scenarios to see how they are reflected in the provided metrics, see the [Observability for Apache Kafka® Clients to Confluent Cloud tutorial](https://docs.confluent.io/platform/current/tutorials/examples/ccloud-observability/docs/observability-overview.html).
+
+
 
