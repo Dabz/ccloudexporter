@@ -10,7 +10,7 @@ package collector
 import (
 	"flag"
 	"os"
-  "regexp"
+    "regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"

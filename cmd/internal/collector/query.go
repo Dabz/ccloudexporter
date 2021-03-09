@@ -68,7 +68,7 @@ type QueryResponse struct {
 // }
 
 var (
-	queryURI = "/v2/metrics/cloud/query"
+	queryURI = "v2/metrics/cloud/query"
 )
 
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
@@ -115,25 +115,28 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 
 	// Exclude topics filter, this isn't necessary if a list of topics is already defined
 	// A list of topics provided is by definition filtering other non-wanted topics
-	if len(topicFiltering) == 0 {
-		excludeTopicFilters := []Filter{}
-		for _, exTopic := range excludeTopics {
-			excludeFilter := Filter{
-				Field: "metric.topic",
-				Op:    "EQ",
-				Value: exTopic,
+	if len(topicFiltering) == 0 && len(excludeTopics) != 0 {
+		_ , contains := NonTopicFilterMetrics[metric.Name]
+		if !contains {
+			excludeTopicFilters := []Filter{}
+			for _, exTopic := range excludeTopics {
+				excludeFilter := Filter{
+					Field: "metric.topic",
+					Op:    "EQ",
+					Value: exTopic,
+				}
+				wrapperNotFilter := Filter{
+					Op:          "NOT",
+					UnaryFilter: &excludeFilter,
+				}
+				excludeTopicFilters = append(excludeTopicFilters, wrapperNotFilter)
 			}
-			wrapperNotFilter := Filter{
-				Op:          "NOT",
-				UnaryFilter: &excludeFilter,
+			if len(excludeTopicFilters) > 0 {
+				filters = append(filters, Filter{
+					Op:      "AND",
+					Filters: excludeTopicFilters,
+				})
 			}
-			excludeTopicFilters = append(excludeTopicFilters, wrapperNotFilter)
-		}
-		if len(excludeTopicFilters) > 0 {
-			filters = append(filters, Filter{
-				Op:      "AND",
-				Filters: excludeTopicFilters,
-			})
 		}
 	}
 
