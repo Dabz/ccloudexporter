@@ -9,6 +9,10 @@ config:
 rules:
   - clusters:
       - lkc-xxxxx
+    connectors:
+      - lcc-xxxxx
+    ksqls:
+      - lksqlc-xxxxx
     metrics:
       - io.confluent.kafka.server/received_bytes
       - io.confluent.kafka.server/sent_bytes
@@ -19,6 +23,12 @@ rules:
       - io.confluent.kafka.server/request_count
       - io.confluent.kafka.server/partition_count
       - io.confluent.kafka.server/successful_authentication_count
+      - io.confluent.kafka.connect/sent_bytes
+      - io.confluent.kafka.connect/received_bytes
+      - io.confluent.kafka.connect/received_records
+      - io.confluent.kafka.connect/sent_records
+      - io.confluent.kafka.connect/dead_letter_queue_records
+      - io.confluent.kafka.ksql/streaming_unit_count
     labels:
       - kafka.id
       - topic

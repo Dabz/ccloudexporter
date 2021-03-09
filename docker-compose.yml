@@ -4,6 +4,7 @@ services:
 
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     volumes:
       - ./prometheus.yml:/prometheus.yml
     command:
@@ -14,7 +15,21 @@ services:
 
   ccloud_exporter:
     image: dabz/ccloudexporter
+    container_name: ccloud_exporter
     environment:
       CCLOUD_API_KEY: ${CCLOUD_API_KEY}
       CCLOUD_API_SECRET: ${CCLOUD_API_SECRET}
-    command: ["-cluster", "${CCLOUD_CLUSTER}"]
+      CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
+      CCLOUD_CONNECTOR: ${CCLOUD_CONNECTOR}
+      CCLOUD_KSQL: ${CCLOUD_KSQL}
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - prometheus
+    command: cfg:default.log.level="debug"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - 3000:3000

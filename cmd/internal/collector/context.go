@@ -52,7 +52,7 @@ var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
 var DefaultGroupingLabels = []string{
-	"cluster_id",
+	"kafka.id",
 	"topic",
 	"type",
 }
@@ -68,6 +68,12 @@ var DefaultMetrics = []string{
 	"io.confluent.kafka.server/request_count",
 	"io.confluent.kafka.server/partition_count",
 	"io.confluent.kafka.server/successful_authentication_count",
+	"io.confluent.kafka.connect/sent_bytes",
+	"io.confluent.kafka.connect/received_bytes",
+	"io.confluent.kafka.connect/received_records",
+	"io.confluent.kafka.connect/sent_records",
+	"io.confluent.kafka.connect/dead_letter_queue_records",
+	"io.confluent.kafka.ksql/streaming_unit_count",
 }
 
 // GetMapOfMetrics returns the whitelist of metrics in a map
@@ -104,7 +110,7 @@ func (context ExporterContext) GetMetrics() []string {
 func (context ExporterContext) GetKafkaRules() []Rule {
 	kafkaRules := make([]Rule, 0)
 	for _, irule := range Context.Rules {
-		if len(irule.Clusters) >= 0 {
+		if len(irule.Clusters) > 0 {
 			kafkaRules = append(kafkaRules, irule)
 		}
 	}
@@ -116,7 +122,7 @@ func (context ExporterContext) GetKafkaRules() []Rule {
 func (context ExporterContext) GetConnectorRules() []Rule {
 	connectorRule := make([]Rule, 0)
 	for _, irule := range Context.Rules {
-		if len(irule.Connectors) >= 0 {
+		if len(irule.Connectors) > 0 {
 			connectorRule = append(connectorRule, irule)
 		}
 	}
@@ -128,7 +134,7 @@ func (context ExporterContext) GetConnectorRules() []Rule {
 func (context ExporterContext) GetKsqlRules() []Rule {
 	ksqlRules := make([]Rule, 0)
 	for _, irule := range Context.Rules {
-		if len(irule.Ksql) >= 0 {
+		if len(irule.Ksql) > 0 {
 			ksqlRules = append(ksqlRules, irule)
 		}
 	}

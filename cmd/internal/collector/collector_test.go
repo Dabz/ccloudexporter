@@ -87,6 +87,7 @@ func TestHandleResponse(t *testing.T) {
 		t.Fail()
 		return
 	}
+
 }
 
 func TestHandleResponseForRegexFiltering(t *testing.T) {
@@ -177,5 +178,4 @@ func TestHandleResponseForRegexFiltering(t *testing.T) {
 		t.Fail()
 		return
 	}
-
 }

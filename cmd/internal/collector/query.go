@@ -8,16 +8,15 @@ package collector
 //
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
+import "fmt"
+import "bytes"
+import "errors"
+import "io/ioutil"
+import "encoding/json"
+import log "github.com/sirupsen/logrus"
 
 // Query to Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -159,7 +158,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 
 	return Query{
-		Aggregations: []Aggregation{aggregation},
+		Aggreations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -205,6 +204,53 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 		groupBy[i] = "resource." + rsrcLabel.Key
 	}
 
+	return Query{
+		Aggreations: []Aggregation{aggregation},
+		Filter:      filterHeader,
+		Granularity: Context.Granularity,
+		GroupBy:     groupBy,
+		Limit:       1000,
+		Intervals:   []string{fmt.Sprintf("%s/%s", timeFrom.Format(time.RFC3339), Context.Granularity)},
+	}
+}
+
+// BuildKsqlQuery creates a new Query for a metric for a specific ksql application
+// This function will return the main global query, override queries will not be generated
+func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource ResourceDescription) Query {
+	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
+	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
+
+	aggregation := Aggregation{
+		Agg:    "SUM",
+		Metric: metric.Name,
+	}
+
+	filters := make([]Filter, 0)
+
+	connectorFilters := make([]Filter, 0)
+	for _, ksqlID := range ksqlAppIds {
+		connectorFilters = append(connectorFilters, Filter{
+			Field: "resource.ksql.id",
+			Op:    "EQ",
+			Value: ksqlID,
+		})
+	}
+
+	filters = append(filters, Filter{
+		Op:      "OR",
+		Filters: connectorFilters,
+	})
+
+	filterHeader := FilterHeader{
+		Op:      "AND",
+		Filters: filters,
+	}
+
+	groupBy := make([]string, len(resource.Labels))
+	for i, rsrcLabel := range resource.Labels {
+		groupBy[i] = "resource." + rsrcLabel.Key
+	}
+  
 	return Query{
 		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,

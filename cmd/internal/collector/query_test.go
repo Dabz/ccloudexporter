@@ -25,6 +25,18 @@ var (
 	}
 )
 
+var (
+	resource = ResourceDescription{
+		Type:        "kafka",
+		Description: "",
+		Labels: []MetricLabel{
+			{
+				Key: "kafka.id",
+			},
+		},
+	}
+)
+
 func TestBuildQuery(t *testing.T) {
 	metric := MetricDescription{
 		Name: "io.confluent.kafka.server/retained_bytes",
@@ -36,6 +48,7 @@ func TestBuildQuery(t *testing.T) {
 			Key: "partition",
 		}},
 	}
+
 
 	query := BuildQuery(metric, []string{"cluster"}, []string{"kafka_id", "topic"}, nil, nil, resource)
 
@@ -140,6 +153,7 @@ func TestOptimizationDoesNotRemoveRequiredGroupBy(t *testing.T) {
 	}
 
 	query, _ := OptimizeQuery(BuildQuery(metric, []string{"cluster1", "cluster2"}, []string{"kafka_id", "topic"}, nil, nil, resource))
+
 
 	if len(query.GroupBy) <= 1 {
 		t.Errorf("Unexepected groupBy list: %s\n", query.GroupBy)

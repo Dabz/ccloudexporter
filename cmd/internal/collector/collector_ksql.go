@@ -44,8 +44,8 @@ func (cc KsqlCCloudCollector) Collect(ch chan<- prometheus.Metric, wg *sync.Wait
 				continue
 			}
 
-			if len(rule.Clusters) <= 0 {
-				log.WithFields(log.Fields{"rule": rule}).Errorln("Kafka rule has no cluster specified")
+			if len(rule.Ksql) <= 0 {
+				log.WithFields(log.Fields{"rule": rule}).Errorln("ksqlDB rule has no cluster specified")
 				continue
 			}
 
@@ -118,7 +118,7 @@ func (cc KsqlCCloudCollector) handleResponse(response QueryResponse, ccmetric CC
 // NewKsqlCCloudCollector create a new Confluent Cloud ksql collector
 func NewKsqlCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceDescription) KsqlCCloudCollector {
 	collector := KsqlCCloudCollector{
-		rules:    Context.GetConnectorRules(),
+		rules:    Context.GetKsqlRules(),
 		metrics:  make(map[string]CCloudCollectorMetric),
 		ccloud:   ccloudcollecter,
 		resource: resource,

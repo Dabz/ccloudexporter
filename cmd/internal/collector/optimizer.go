@@ -22,7 +22,7 @@ func OptimizeQuery(input Query) (Query, map[string]string) {
 
 // If there is an equality filtering on a field, there is no need
 // to group by this label.
-func removeSuperfluousGroupBy(input Query) (Query, map[string]string) {
+func removeSuperfluousGoupBy(input Query) (Query, map[string]string) {
 	optimizedGroupByList := make([]string, 0)
 	labels := make(map[string]string)
 	for _, groupBy := range input.GroupBy {

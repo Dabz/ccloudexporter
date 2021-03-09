@@ -1,15 +1,8 @@
-# Important information
-
-In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
-Nowadays, only the API key/secret is officially supported to connect to the Metrics API.
-
-To ensure backward compatibility, previous environment variables are still available.
-Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
-
 # Prometheus exporter for Confluent Cloud Metrics API
 
-A simple prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
-By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112).
+A simple Prometheus exporter that can be used to extract metrics from [Confluent Cloud Metric API](https://docs.confluent.io/current/cloud/metrics-api.html).
+By default, the exporter will be exposing the metrics on [port 2112](http://localhost:2112).  When launching with Docker Compose, metrics are displayed via a Grafana dashboard on [http://localhost:3000](http://localhost:3000) (`admin`/`admin`).
+
 To use the exporter, the following environment variables need to be specified:
 
 * `CCLOUD_API_KEY`: The API Key created with `ccloud api-key create --resource cloud`
@@ -20,7 +13,7 @@ To use the exporter, the following environment variables need to be specified:
 ## Usage
 
 ```shell
-./ccloudexporter -cluster <cluster_id>
+./ccloudexporter [-cluster <cluster_id>] [-connector <connector_id>] [-ksqlDB <app_id>]
 ```
 
 ### Options
@@ -28,27 +21,31 @@ To use the exporter, the following environment variables need to be specified:
 ```
 Usage of ./ccloudexporter:
   -cluster string
-        Cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
+    	Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
   -config string
-        Path to configuration file used to override default behavior of ccloudexporter
+    	Path to configuration file used to override default behavior of ccloudexporter
+  -connector string
+    	Comma separated list of connector ID to fetch metric for. If not specified, the environment variable CCLOUD_CONNECTOR will be used
   -delay int
-        Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
+    	Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points. (default 120)
   -endpoint string
-        Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
+    	Base URL for the Metric API (default "https://api.telemetry.confluent.cloud/")
   -granularity string
-        Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+    	Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
+  -ksqlDB string
+    	Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used
   -listener string
-        Listener for the HTTP interface (default ":2112")
+    	Listener for the HTTP interface (default ":2112")
   -log-pretty-print
-        Pretty print the JSON log output (default true)
+    	Pretty print the JSON log output (default true)
   -no-timestamp
-        Do not propagate the timestamp from the the metrics API to prometheus
+    	Do not propagate the timestamp from the the metrics API to prometheus
   -timeout int
-        Timeout, in second, to use for all REST call with the Metric API (default 60)
+    	Timeout, in second, to use for all REST call with the Metric API (default 60)
   -verbose
-        Print trace level logs to stdout
+    	Print trace level logs to stdout
   -version
-        Print the current version and exit
+    	Print the current version and exit
 ```
 
 ## Examples
@@ -82,6 +79,8 @@ export CCLOUD_API_SECRET=XXXXXXXXXXXXXXXX
 export CCLOUD_CLUSTER=lkc-abc123
 docker-compose up -d
 ```
+In addition to the metrics exporter and Prometheus containers, the Docker Compose launch starts a [Grafana](https://github.com/grafana/grafana) on [http://localhost:3000](http://localhost:3000) (`admin`/`admin`).  The launch pre-provisions a Prometheus datasource for the Confluent Cloud metrics and a default dashboard.
+
 
 ### Using Kubernetes
 
@@ -124,12 +123,15 @@ If you do not provide a configuration file, the exporter creates one from the pr
 
 | Key                                   | Description                                                                                                   |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| rules.clusters                        | List of clusters to fetch metrics from                                                                        |
+| rules.clusters                        | List of Kafka clusters to fetch metrics for                                                                   |
+| rules.connectors                      | List of connectors to fetch metrics for                                                                       |
+| rules.ksqls                           | List of ksqlDB applications to fetch metrics for                                                              |
 | rules.labels                          | Labels to exposed to Prometheus and group by in the query                                                     |
 | rules.topics                          | Optional list of topics to filter the metrics                                                                 |
 | rules.excludedTopics                  | Optional list of topics to exclude from the query                                                             |
 | rules.topicMetricsLocalFilterRegex    | Optional regex to filter the result of the query locally. Anything matching the regex will NOT be included.   |
 | rules.metrics                         | List of metrics to gather                                                                                     |
+
 
 ### Examples of configuration files
 
@@ -150,6 +152,10 @@ config:
 rules:
   - clusters:
       - $CCLOUD_CLUSTER
+    connectors:
+      - $CCLOUD_CONNECTOR
+    ksqls:
+      - $CCLOUD_KSQL
     metrics:
       - io.confluent.kafka.server/received_bytes
       - io.confluent.kafka.server/sent_bytes
@@ -160,8 +166,14 @@ rules:
       - io.confluent.kafka.server/request_count
       - io.confluent.kafka.server/partition_count
       - io.confluent.kafka.server/successful_authentication_count
+      - io.confluent.kafka.connect/sent_bytes
+      - io.confluent.kafka.connect/received_bytes
+      - io.confluent.kafka.connect/received_records
+      - io.confluent.kafka.connect/sent_records
+      - io.confluent.kafka.connect/dead_letter_queue_records
+      - io.confluent.kafka.ksql/streaming_unit_count
     labels:
-      - cluster_id
+      - kafka_id
       - topic
       - type
 ```
@@ -185,3 +197,22 @@ go get github.com/Dabz/ccloudexporter/cmd/ccloudexporter
 A Grafana dashboard is provided in [./grafana/](./grafana) folder.
 
 ![Grafana Screenshot](./grafana/grafana.png)
+
+# Deprecated configuration
+
+## cluster_id is deprecated
+
+Historically, the exporter and the Metrics API exposed the ID of the cluster with the label `cluster_id`.
+In the Metrics API V2, this label has been renamed to `resource.kafka.id`. It is now exposed by the exporter as `kafka_id` instead.
+
+To avoid breaking previous dashboard, the exporter is exposing, for the moment, the ID of the cluster as `cluster_id` and `kafka_id`.
+
+## Username/Password authentication is deprecated
+
+In previous versions, it was possible to rely on username/password to authenticate to Confluent Cloud.
+Nowadays, only the API key/secret is officially supported to connect to the Metrics API.
+
+To ensure backward compatibility, previous environment variables are still available.
+Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
+
+

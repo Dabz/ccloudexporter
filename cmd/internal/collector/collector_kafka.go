@@ -77,6 +77,7 @@ func (cc KafkaCCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan
 func (cc KafkaCCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule, additionalLabels map[string]string) {
 	desc := ccmetric.desc
 
+
 	if len(response.Data) == 1000 {
 		log.Warn("The query returned the maximum amount of data points allowed (1000), " +
 			"you might be missing some data. Try further filtering your ccloudexporter.")
@@ -100,6 +101,7 @@ METRICSLOOP:
 			continue
 		}
 
+
 		if topicPresent {
 			for _, currentRegex := range RegexList {
 				if currentRegex.MatchString(topic) {
@@ -107,6 +109,7 @@ METRICSLOOP:
 				}
 			}
 		}
+
 
 		value, ok := dataPoint["value"].(float64)
 		if !ok {
@@ -116,6 +119,10 @@ METRICSLOOP:
 
 		labels := []string{}
 		for _, label := range ccmetric.labels {
+			// For compatibility reason, kafka_id label is also added as cluster_id
+			if label == "cluster_id" {
+				label = "kafka_id"
+			}
 			name := cc.resource.datapointFieldNameForLabel(label)
 			labelValue, labelValuePresent := dataPoint[name].(string)
 			if !labelValuePresent {
@@ -167,6 +174,10 @@ func NewKafkaCCloudCollector(ccloudcollecter CCloudCollector, resource ResourceD
 		var labels []string
 		for _, rsrcLabel := range resource.Labels {
 			labels = append(labels, GetPrometheusNameForLabel(rsrcLabel.Key))
+			// For retro-compatibility, kafka_id is also exposed as cluster_id
+			if rsrcLabel.Key == "kafka.id" {
+				labels = append(labels, "cluster_id")
+			}
 		}
 		for _, metrLabel := range metr.Labels {
 			labels = append(labels, metrLabel.Key)
