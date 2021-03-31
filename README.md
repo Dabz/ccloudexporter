@@ -81,6 +81,7 @@ docker-compose up -d
 ```
 In addition to the metrics exporter and Prometheus containers, the Docker Compose launch starts a [Grafana](https://github.com/grafana/grafana) on [http://localhost:3000](http://localhost:3000) (`admin`/`admin`).  The launch pre-provisions a Prometheus datasource for the Confluent Cloud metrics and a default dashboard.
 
+The Docker Compose service definitions include data volumes for both Prometheus and Grafana, so metrics data will be retained following `docker-compose down` and restored when containers are started again. To remove these volumes and start with empty Prometheus and Grafana databases, run `docker-compose down --volumes`.
 
 ### Using Kubernetes
 
