@@ -7,6 +7,7 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/prometheus.yml
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/prometheus.yml'
     ports:
@@ -31,5 +32,10 @@ services:
     command: cfg:default.log.level="debug"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
     ports:
       - 3000:3000
+
+volumes:
+  prometheus-data:
+  grafana-data:
