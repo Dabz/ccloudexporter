@@ -57,7 +57,7 @@ func (cc KafkaCCloudCollector) Collect(ch chan<- prometheus.Metric, wg *sync.Wai
 // CollectMetricsForRule collects all metrics for a specific rule
 func (cc KafkaCCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan<- prometheus.Metric, rule Rule, ccmetric CCloudCollectorMetric) {
 	defer wg.Done()
-	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, cc.resource)
+	query := BuildQuery(ccmetric.metric, rule.Clusters, rule.GroupByLabels, rule.Topics, rule.ExcludeTopics, cc.resource)
 	log.WithFields(log.Fields{"query": query}).Traceln("The following query has been created")
 	optimizedQuery, additionalLabels := OptimizeQuery(query)
 	log.WithFields(log.Fields{"optimizedQuery": optimizedQuery, "additionalLabels": additionalLabels}).Traceln("Query has been optimized")
@@ -76,6 +76,14 @@ func (cc KafkaCCloudCollector) CollectMetricsForRule(wg *sync.WaitGroup, ch chan
 
 func (cc KafkaCCloudCollector) handleResponse(response QueryResponse, ccmetric CCloudCollectorMetric, ch chan<- prometheus.Metric, rule Rule, additionalLabels map[string]string) {
 	desc := ccmetric.desc
+
+
+	if len(response.Data) == 1000 {
+		log.Warn("The query returned the maximum amount of data points allowed (1000), " +
+			"you might be missing some data. Try further filtering your ccloudexporter.")
+	}
+
+METRICSLOOP:
 	for _, dataPoint := range response.Data {
 		// Some data points might need to be ignored if it is the global query
 		topic, topicPresent := dataPoint["metric.topic"].(string)
@@ -92,6 +100,16 @@ func (cc KafkaCCloudCollector) handleResponse(response QueryResponse, ccmetric C
 		if topicPresent && clusterPresent && rule.ShouldIgnoreResultForRule(topic, cluster, ccmetric.metric.Name) {
 			continue
 		}
+
+
+		if topicPresent {
+			for _, currentRegex := range RegexList {
+				if currentRegex.MatchString(topic) {
+					continue METRICSLOOP
+				}
+			}
+		}
+
 
 		value, ok := dataPoint["value"].(float64)
 		if !ok {

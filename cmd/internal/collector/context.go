@@ -26,6 +26,8 @@ type ExporterContext struct {
 // should collect for a specific set of topics or clusters
 type Rule struct {
 	Topics                           []string `mapstructure:"topics"`
+	ExcludeTopics                    []string `mapstructure:"ExcludeTopics"`
+	ExcludeTopicsRegex               []string `mapstructure:"topicMetricsLocalFilterRegex"`
 	Clusters                         []string `mapstructure:"clusters"`
 	Connectors                       []string `mapstructure:"connectors"`
 	Ksql                             []string `mapstructure:"ksqls"`
@@ -45,7 +47,7 @@ type TopicClusterMetric struct {
 // Version is the git short SHA1 hash provided at build time
 var Version = "homecooked"
 
-// Context is the global variable defining the context for the expoter
+// Context is the global variable defining the context for the exporter
 var Context = ExporterContext{}
 
 // DefaultGroupingLabels is the default value for groupBy.labels
@@ -72,6 +74,13 @@ var DefaultMetrics = []string{
 	"io.confluent.kafka.connect/sent_records",
 	"io.confluent.kafka.connect/dead_letter_queue_records",
 	"io.confluent.kafka.ksql/streaming_unit_count",
+}
+
+var NonTopicFilterMetrics = map[string]struct{}{
+	"io.confluent.kafka.server/active_connection_count" : {},
+	"io.confluent.kafka.server/request_count" : {},
+	"io.confluent.kafka.server/partition_count" : {},
+	"io.confluent.kafka.server/successful_authentication_count" : {},
 }
 
 // GetMapOfMetrics returns the whitelist of metrics in a map

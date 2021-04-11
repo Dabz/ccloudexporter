@@ -26,7 +26,7 @@ type CCloudCollectorMetric struct {
 	global   bool
 }
 
-// CCloudCollector is a custom prometheu collector to collect data from
+// CCloudCollector is a custom prometheus collector to collect data from
 // Confluent Cloud Metrics API
 type CCloudCollector struct {
 	metrics            map[string]CCloudCollectorMetric
@@ -58,7 +58,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 // NewCCloudCollector creates a new instance of the collector
-// During the creation, we invoke the descriptor endpoint to fetcha all
+// During the creation, we invoke the descriptor endpoint to fetch all
 // existing metrics and their labels
 func NewCCloudCollector() CCloudCollector {
 

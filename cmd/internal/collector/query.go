@@ -22,12 +22,12 @@ import log "github.com/sirupsen/logrus"
 // This is the JSON structure for the endpoint
 // https://api.telemetry.confluent.cloud/v1/metrics/cloud/descriptors
 type Query struct {
-	Aggreations []Aggregation `json:"aggregations"`
-	Filter      FilterHeader  `json:"filter"`
-	Granularity string        `json:"granularity"`
-	GroupBy     []string      `json:"group_by"`
-	Intervals   []string      `json:"intervals"`
-	Limit       int           `json:"limit"`
+	Aggregations []Aggregation `json:"aggregations"`
+	Filter       FilterHeader  `json:"filter"`
+	Granularity  string        `json:"granularity"`
+	GroupBy      []string      `json:"group_by"`
+	Intervals    []string      `json:"intervals"`
+	Limit        int           `json:"limit"`
 }
 
 // Aggregation for a Confluent Cloud API metric
@@ -44,10 +44,11 @@ type FilterHeader struct {
 
 // Filter structure
 type Filter struct {
-	Field   string   `json:"field,omitempty"`
-	Op      string   `json:"op"`
-	Value   string   `json:"value,omitempty"`
-	Filters []Filter `json:"filters,omitempty"`
+	Field       string   `json:"field,omitempty"`
+	Op          string   `json:"op"`
+	Value       string   `json:"value,omitempty"`
+	Filters     []Filter `json:"filters,omitempty"`
+	UnaryFilter *Filter  `json:"filter,omitempty"`
 }
 
 // QueryResponse from the cloud endpoint
@@ -67,12 +68,12 @@ type QueryResponse struct {
 // }
 
 var (
-	queryURI = "/v2/metrics/cloud/query"
+	queryURI = "v2/metrics/cloud/query"
 )
 
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
 // This function will return the main global query, override queries will not be generated
-func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string, resource ResourceDescription) Query {
+func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []string, topicFiltering []string, excludeTopics []string, resource ResourceDescription) Query {
 	timeFrom := time.Now().Add(time.Duration(-Context.Delay) * time.Second)  // the last minute might contains data that is not yet finalized
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
@@ -112,6 +113,33 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 		})
 	}
 
+	// Exclude topics filter, this isn't necessary if a list of topics is already defined
+	// A list of topics provided is by definition filtering other non-wanted topics
+	if len(topicFiltering) == 0 && len(excludeTopics) != 0 {
+		_ , contains := NonTopicFilterMetrics[metric.Name]
+		if !contains {
+			excludeTopicFilters := []Filter{}
+			for _, exTopic := range excludeTopics {
+				excludeFilter := Filter{
+					Field: "metric.topic",
+					Op:    "EQ",
+					Value: exTopic,
+				}
+				wrapperNotFilter := Filter{
+					Op:          "NOT",
+					UnaryFilter: &excludeFilter,
+				}
+				excludeTopicFilters = append(excludeTopicFilters, wrapperNotFilter)
+			}
+			if len(excludeTopicFilters) > 0 {
+				filters = append(filters, Filter{
+					Op:      "AND",
+					Filters: excludeTopicFilters,
+				})
+			}
+		}
+	}
+
 	filterHeader := FilterHeader{
 		Op:      "AND",
 		Filters: filters,
@@ -133,7 +161,7 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -180,7 +208,7 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 	}
 
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
@@ -225,9 +253,9 @@ func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource Reso
 	for i, rsrcLabel := range resource.Labels {
 		groupBy[i] = "resource." + rsrcLabel.Key
 	}
-
+  
 	return Query{
-		Aggreations: []Aggregation{aggregation},
+		Aggregations: []Aggregation{aggregation},
 		Filter:      filterHeader,
 		Granularity: Context.Granularity,
 		GroupBy:     groupBy,
