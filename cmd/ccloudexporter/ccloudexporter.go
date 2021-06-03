@@ -8,27 +8,22 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Dabz/ccloudexporter/cmd/internal/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 	"net/http"
-	"os"
 )
 
 func main() {
-	if len(os.Args) <= 1 {
-		fmt.Printf("Usage: %s <cluster id>\n", os.Args[0])
-		os.Exit(1)
-	}
+	collector.ParseOption()
 
-	cluster := os.Args[1]
-	collector := collector.NewCCloudCollector(cluster)
-	prometheus.MustRegister(collector)
+	ccollector := collector.NewCCloudCollector()
+	prometheus.MustRegister(ccollector)
 
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Listening on http://localhost:2112/metrics")
-	err := http.ListenAndServe(":2112", nil)
+	log.Printf("Listening on http://%s/metrics\n", collector.Context.Listener)
+	err := http.ListenAndServe(collector.Context.Listener, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -57,7 +57,7 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -70,7 +70,7 @@
       "type": "row"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The sum of partitions in a cluster. Basic cluster max partitions limit is 2048.",
       "fieldConfig": {
         "defaults": {
@@ -140,7 +140,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "Per-second average rate of ingress of data to topics, basic cluster has a max of 100MBps.",
       "fieldConfig": {
         "defaults": {
@@ -209,7 +209,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "Per-second average rate of egress data to topics, basic cluster has a max of 100MBps.",
       "fieldConfig": {
         "defaults": {
@@ -278,7 +278,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "Per-second average rate of requests, basic cluster maxes out at 1500 requests per second.",
       "fieldConfig": {
         "defaults": {
@@ -347,7 +347,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "Basic clusters have a max retained bytes limit of 5 TB prior to replication. ccloud_metrics_retained_bytes is after replication thus needs to be divided by 3.",
       "fieldConfig": {
         "defaults": {
@@ -416,7 +416,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "Basic clusters have a limit on the number of partitions that can be created and deleted in a 5 minute period. This single stat provides the absolute difference between the number of partitions are the beginning and end of the 5 minute period. This over simplifies the problem, so more conservative thresholds are put in place. ",
       "fieldConfig": {
         "defaults": {
@@ -487,7 +487,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The average active connections to a cluster. Basic clusters limit active connections to 1000.",
       "fieldConfig": {
         "defaults": {
@@ -558,7 +558,7 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -628,7 +628,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -645,7 +645,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The current count of bytes retained by the cluster, summed across all partitions. The count is sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -748,7 +748,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The delta count of bytes received from the network. Each sample is the number of bytes received since the previous data sample. The count is sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -847,7 +847,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The delta count of bytes sent over the network. Each sample is the number of bytes sent since the previous data point. The count is sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -947,7 +947,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The delta count of records received. Each sample is the number of records received since the previous data sample. The count is sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -1046,7 +1046,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The delta count of records sent. Each sample is the number of records sent since the previous data point. The count is sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -1145,7 +1145,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "description": "The delta count of requests received over the network. Each sample is the number of requests received since the previous data point. The count sampled every 60 seconds.",
       "fieldConfig": {
         "defaults": {
@@ -1245,7 +1245,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1255,7 +1255,7 @@
       "id": 33,
       "panels": [
         {
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1314,7 +1314,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1373,7 +1373,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1469,7 +1469,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1565,7 +1565,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1661,7 +1661,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1758,7 +1758,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1768,7 +1768,7 @@
       "id": 42,
       "panels": [
         {
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1827,7 +1827,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1891,7 +1891,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus_ccloudexporter",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1940,7 +1940,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2079,7 +2079,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "prometheus_ccloudexporter",
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2192,7 +2192,7 @@
       {
         "allValue": ".*",
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": "prometheus_ccloudexporter",
         "definition": "label_values(ccloud_metric_retained_bytes, kafka_id)",
         "description": null,
         "error": null,
@@ -2216,7 +2216,7 @@
       {
         "allValue": "",
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": "prometheus_ccloudexporter",
         "definition": "label_values(ccloud_metric_retained_bytes, topic)",
         "description": null,
         "error": null,

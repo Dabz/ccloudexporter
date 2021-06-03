@@ -1,19 +1,41 @@
 version: '3.1'
 
 services:
+
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     volumes:
       - ./prometheus.yml:/prometheus.yml
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/prometheus.yml'
     ports:
       - 9090:9090
     restart: always
+
   ccloud_exporter:
     image: dabz/ccloudexporter
+    container_name: ccloud_exporter
     environment:
-      CCLOUD_USER: ${CCLOUD_USER}
-      CCLOUD_PASSWORD: ${CCLOUD_PASSWORD}
+      CCLOUD_API_KEY: ${CCLOUD_API_KEY}
+      CCLOUD_API_SECRET: ${CCLOUD_API_SECRET}
       CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
-    command: ccloudexporter ${CCLOUD_CLUSTER}
+      CCLOUD_CONNECTOR: ${CCLOUD_CONNECTOR}
+      CCLOUD_KSQL: ${CCLOUD_KSQL}
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - prometheus
+    command: cfg:default.log.level="debug"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports:
+      - 3000:3000
+
+volumes:
+  prometheus-data:
+  grafana-data:

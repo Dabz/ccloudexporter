@@ -8,98 +8,101 @@ package collector
 //
 
 import (
-	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
+	"net/http"
+	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
+// CCloudCollectorMetric describes a single Metric from Confluent Cloud
 type CCloudCollectorMetric struct {
-	metric MetricDescription
-	desc   *prometheus.Desc
+	metric   MetricDescription
+	desc     *prometheus.Desc
+	duration *prometheus.GaugeVec
+	labels   []string
+	rule     Rule
+	global   bool
 }
 
+// CCloudCollector is a custom prometheu collector to collect data from
+// Confluent Cloud Metrics API
 type CCloudCollector struct {
-	userName  string
-	password  string
-	cluster   string
-	topicList map[string]*string
-	metrics   []CCloudCollectorMetric
+	metrics            map[string]CCloudCollectorMetric
+	rules              []Rule
+	kafkaCollector     *KafkaCCloudCollector
+	connectorCollector *ConnectorCCloudCollector
+	ksqlCollector      *KsqlCCloudCollector
 }
 
+var (
+	httpClient http.Client
+)
+
+// Describe collect all metrics for ccloudexporter
 func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
-	for _, desc := range cc.metrics {
-		ch <- desc.desc
-	}
+	cc.kafkaCollector.Describe(ch)
+	cc.connectorCollector.Describe(ch)
+	cc.ksqlCollector.Describe(ch)
 }
 
+// Collect all metrics for Prometheus
+// to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
-	from := time.Now().Add(time.Minute * -2)
-	to := time.Now().Add(time.Minute * -1)
-	for _, pair := range cc.metrics {
-		desc := pair.desc
-		query := BuildQuery(pair.metric, cc.cluster, from, to)
-		response, err := SendQuery(query)
-		if err != nil {
-			fmt.Println(err.Error())
-			break
-		}
-
-		set := make(map[string]struct{}, len(response.Data))
-		for _, dataPoint := range response.Data {
-			var metric prometheus.Metric
-			if pair.metric.hasLabel("topic") {
-				metric = prometheus.MustNewConstMetric(
-					desc,
-					prometheus.GaugeValue,
-					dataPoint.Value,
-					dataPoint.Topic, cc.cluster,
-				)
-
-				_, ok := set[dataPoint.Topic]
-				if ok {
-					continue
-				}
-				set[dataPoint.Topic] = struct{}{}
-				metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
-				ch <- metricWithTime
-
-			} else {
-				metric = prometheus.MustNewConstMetric(
-					desc,
-					prometheus.GaugeValue,
-					dataPoint.Value,
-					cc.cluster,
-				)
-				metricWithTime := prometheus.NewMetricWithTimestamp(dataPoint.Timestamp, metric)
-				ch <- metricWithTime
-				break
-			}
-		}
-	}
+	var wg sync.WaitGroup
+	cc.kafkaCollector.Collect(ch, &wg)
+	cc.connectorCollector.Collect(ch, &wg)
+	cc.ksqlCollector.Collect(ch, &wg)
+	wg.Wait()
 }
 
-func NewCCloudCollector(cluster string) CCloudCollector {
-	collector := CCloudCollector{cluster: cluster}
-	descriptorResponse := SendDescriptorQuery()
-	for _, metr := range descriptorResponse.Data {
-		var labels []string
-		if metr.hasLabel("topic") {
-			labels = []string{"topic", "cluster"}
-		} else {
-			labels = []string{"cluster"}
-		}
-		desc := prometheus.NewDesc(
-			"ccloud_metric_"+GetNiceNameForMetric(metr),
-			metr.Description,
-			labels,
-			nil,
-		)
+// NewCCloudCollector creates a new instance of the collector
+// During the creation, we invoke the descriptor endpoint to fetcha all
+// existing metrics and their labels
+func NewCCloudCollector() CCloudCollector {
 
-		metric := CCloudCollectorMetric{
-			metric: metr,
-			desc:   desc,
-		}
-		collector.metrics = append(collector.metrics, metric)
+	log.Traceln("Creating http client")
+	httpClient = http.Client{
+		Timeout: time.Second * time.Duration(Context.HTTPTimeout),
 	}
+
+	var (
+		connectorResource ResourceDescription
+		kafkaResource     ResourceDescription
+		ksqlResource      ResourceDescription
+	)
+	resourceDescription := SendResourceDescriptorQuery()
+	for _, resource := range resourceDescription.Data {
+		if resource.Type == "connector" {
+			connectorResource = resource
+		} else if resource.Type == "kafka" {
+			kafkaResource = resource
+		} else if resource.Type == "ksql" {
+			ksqlResource = resource
+		}
+	}
+
+	if connectorResource.Type == "" {
+		log.WithField("descriptorResponse", resourceDescription).Fatalln("No connector resource available")
+	}
+
+	if kafkaResource.Type == "" {
+		log.WithField("descriptorResponse", resourceDescription).Fatalln("No kafka resource available")
+	}
+
+	if ksqlResource.Type == "" {
+		log.WithField("descriptorResponse", resourceDescription).Fatalln("No ksqlDB resource available")
+	}
+
+	collector := CCloudCollector{rules: Context.Rules, metrics: make(map[string]CCloudCollectorMetric)}
+	kafkaCollector := NewKafkaCCloudCollector(collector, kafkaResource)
+	connectorCollector := NewConnectorCCloudCollector(collector, connectorResource)
+	ksqlCollector := NewKsqlCCloudCollector(collector, ksqlResource)
+
+	collector.kafkaCollector = &kafkaCollector
+	collector.connectorCollector = &connectorCollector
+	collector.ksqlCollector = &ksqlCollector
+
 	return collector
 }
