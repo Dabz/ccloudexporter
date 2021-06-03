@@ -7,10 +7,13 @@ package collector
 // Distributed under terms of the MIT license.
 //
 
-import "strings"
-import "encoding/json"
-import "io/ioutil"
-import log "github.com/sirupsen/logrus"
+import (
+	"encoding/json"
+	"io/ioutil"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+)
 
 // DescriptorMetricResponse is the response from Confluent Cloud API metric endpoint
 // This is the JSON structure for the endpoint
@@ -54,10 +57,11 @@ type ResourceDescription struct {
 
 var (
 	excludeListForMetric = map[string]string{
-		"io.confluent.kafka.server":  "",
-		"io.confluent.kafka.connect": "",
-		"io.confluent.kafka.ksql":    "",
-		"delta":                      "",
+		"io.confluent.kafka.server":          "",
+		"io.confluent.kafka.connect":         "",
+		"io.confluent.kafka.ksql":            "",
+		"io.confluent.kafka.schema_registry": "",
+		"delta":                              "",
 	}
 	descriptorURI         = "v2/metrics/cloud/descriptors/metrics"
 	descriptorResourceURI = "v2/metrics/cloud/descriptors/resources"
@@ -88,6 +92,8 @@ func (resource ResourceDescription) hasLabel(label string) bool {
 func (resource ResourceDescription) datapointFieldNameForLabel(label string) string {
 	if resource.hasLabel(label) {
 		return "resource." + strings.Replace(label, "_", ".", -1)
+		// TODO fix it to work with schema_registry_id in param. Must return resource.schema_registry.id
+		// When fix, could remove hard coded conversion in collector_schemaregistry.go line 91->93
 	}
 	return "metric." + label
 }

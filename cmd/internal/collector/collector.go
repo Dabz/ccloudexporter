@@ -29,11 +29,12 @@ type CCloudCollectorMetric struct {
 // CCloudCollector is a custom prometheu collector to collect data from
 // Confluent Cloud Metrics API
 type CCloudCollector struct {
-	metrics            map[string]CCloudCollectorMetric
-	rules              []Rule
-	kafkaCollector     *KafkaCCloudCollector
-	connectorCollector *ConnectorCCloudCollector
-	ksqlCollector      *KsqlCCloudCollector
+	metrics                 map[string]CCloudCollectorMetric
+	rules                   []Rule
+	kafkaCollector          *KafkaCCloudCollector
+	connectorCollector      *ConnectorCCloudCollector
+	ksqlCollector           *KsqlCCloudCollector
+	schemaRegistryCollector *SchemaRegistryCCloudCollector
 }
 
 var (
@@ -45,6 +46,7 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 	cc.kafkaCollector.Describe(ch)
 	cc.connectorCollector.Describe(ch)
 	cc.ksqlCollector.Describe(ch)
+	cc.schemaRegistryCollector.Describe(ch)
 }
 
 // Collect all metrics for Prometheus
@@ -54,6 +56,7 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	cc.kafkaCollector.Collect(ch, &wg)
 	cc.connectorCollector.Collect(ch, &wg)
 	cc.ksqlCollector.Collect(ch, &wg)
+	cc.schemaRegistryCollector.Collect(ch, &wg)
 	wg.Wait()
 }
 
@@ -68,9 +71,10 @@ func NewCCloudCollector() CCloudCollector {
 	}
 
 	var (
-		connectorResource ResourceDescription
-		kafkaResource     ResourceDescription
-		ksqlResource      ResourceDescription
+		connectorResource      ResourceDescription
+		kafkaResource          ResourceDescription
+		ksqlResource           ResourceDescription
+		schemaRegistryResource ResourceDescription
 	)
 	resourceDescription := SendResourceDescriptorQuery()
 	for _, resource := range resourceDescription.Data {
@@ -80,6 +84,8 @@ func NewCCloudCollector() CCloudCollector {
 			kafkaResource = resource
 		} else if resource.Type == "ksql" {
 			ksqlResource = resource
+		} else if resource.Type == "schema_registry" {
+			schemaRegistryResource = resource
 		}
 	}
 
@@ -95,14 +101,20 @@ func NewCCloudCollector() CCloudCollector {
 		log.WithField("descriptorResponse", resourceDescription).Fatalln("No ksqlDB resource available")
 	}
 
+	if schemaRegistryResource.Type == "" {
+		log.WithField("descriptorResponse", resourceDescription).Fatalln("No SchemaRegistry resource available")
+	}
+
 	collector := CCloudCollector{rules: Context.Rules, metrics: make(map[string]CCloudCollectorMetric)}
 	kafkaCollector := NewKafkaCCloudCollector(collector, kafkaResource)
 	connectorCollector := NewConnectorCCloudCollector(collector, connectorResource)
 	ksqlCollector := NewKsqlCCloudCollector(collector, ksqlResource)
+	schemaRegistryCollector := NewSchemaRegistryCCloudCollector(collector, schemaRegistryResource)
 
 	collector.kafkaCollector = &kafkaCollector
 	collector.connectorCollector = &connectorCollector
 	collector.ksqlCollector = &ksqlCollector
+	collector.schemaRegistryCollector = &schemaRegistryCollector
 
 	return collector
 }

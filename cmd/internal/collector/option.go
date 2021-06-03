@@ -24,6 +24,7 @@ func ParseOption() {
 	var clusters string
 	var connectors string
 	var ksqlApplications string
+	var schemaRegistries string
 	var configPath string
 
 	flag.StringVar(&configPath, "config", "", "Path to configuration file used to override default behavior of ccloudexporter")
@@ -34,6 +35,7 @@ func ParseOption() {
 	flag.StringVar(&clusters, "cluster", "", "Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
 	flag.StringVar(&connectors, "connector", "", "Comma separated list of connector ID to fetch metric for. If not specified, the environment variable CCLOUD_CONNECTOR will be used")
 	flag.StringVar(&ksqlApplications, "ksqlDB", "", "Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used")
+	flag.StringVar(&schemaRegistries, "schemaRegistry", "", "Comma separated list of Schema Registry ID to fetch metric for. If not specified, the environment variable CCLOUD_SCHEMA_REGISTRY will be used")
 	flag.StringVar(&Context.Listener, "listener", ":2112", "Listener for the HTTP interface")
 	flag.BoolVar(&Context.NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
 	versionFlag := flag.Bool("version", false, "Print the current version and exit")
@@ -58,6 +60,7 @@ func ParseOption() {
 	clusters = getFromEnvIfEmpty(clusters, "CCLOUD_CLUSTER")
 	connectors = getFromEnvIfEmpty(connectors, "CCLOUD_CONNECTOR")
 	ksqlApplications = getFromEnvIfEmpty(ksqlApplications, "CCLOUD_KSQL")
+	schemaRegistries = getFromEnvIfEmpty(schemaRegistries, "CCLOUD_SCHEMA_REGISTRY")
 
 	if configPath != "" {
 		parseConfigFile(configPath)
@@ -66,6 +69,7 @@ func ParseOption() {
 			splitEnv(clusters),
 			splitEnv(connectors),
 			splitEnv(ksqlApplications),
+			splitEnv(schemaRegistries),
 		)
 	}
 	validateConfiguration()
@@ -156,15 +160,16 @@ func parseConfigFile(configPath string) {
 	}
 }
 
-func createDefaultRule(clusters []string, connectors []string, ksqlDBApplications []string) {
+func createDefaultRule(clusters []string, connectors []string, ksqlDBApplications []string, schemaRegistries []string) {
 	Context.Rules = make([]Rule, 1)
 	Context.Rules[0] = Rule{
-		id:            0,
-		Clusters:      clusters,
-		Connectors:    connectors,
-		Ksql:          ksqlDBApplications,
-		Metrics:       DefaultMetrics,
-		GroupByLabels: DefaultGroupingLabels,
+		id:               0,
+		Clusters:         clusters,
+		Connectors:       connectors,
+		Ksql:             ksqlDBApplications,
+		SchemaRegistries: schemaRegistries,
+		Metrics:          DefaultMetrics,
+		GroupByLabels:    DefaultGroupingLabels,
 	}
 }
 
