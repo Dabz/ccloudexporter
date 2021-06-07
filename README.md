@@ -13,7 +13,7 @@ To use the exporter, the following environment variables need to be specified:
 ## Usage
 
 ```shell
-./ccloudexporter [-cluster <cluster_id>] [-connector <connector_id>] [-ksqlDB <app_id>]
+./ccloudexporter [-cluster <cluster_id>] [-connector <connector_id>] [-ksqlDB <app_id>] [-schemaRegistry <sr_id>]
 ```
 
 ### Options
@@ -34,6 +34,8 @@ Usage of ./ccloudexporter:
     	Granularity for the metrics query, by default set to 1 minutes (default "PT1M")
   -ksqlDB string
     	Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used
+  -schemaRegistry string
+    	Comma separated list of Schema Registry ID to fetch metric for. If not specified, the environment variable CCLOUD_SCHEMA_REGISTRY will be used
   -listener string
     	Listener for the HTTP interface (default ":2112")
   -log-pretty-print
@@ -122,14 +124,15 @@ If you do not provide a configuration file, the exporter creates one from the pr
 
 #### Rule configuration
 
-| Key                | Description                                                                                                   |
-|--------------------|---------------------------------------------------------------------------------------------------------------|
-| rules.clusters     | List of Kafka clusters to fetch metrics for                                                                   |
-| rules.connectors   | List of connectors to fetch metrics for                                                                       |
-| rules.ksqls        | List of ksqlDB applications to fetch metrics for                                                              |
-| rules.labels       | Labels to exposed to Prometheus and group by in the query                                                     |
-| rules.topics       | Optional list of topics to filter the metrics                                                                 |
-| rules.metrics      | List of metrics to gather                                                                                     |
+| Key                    | Description                                                                                                   |
+|------------------------|---------------------------------------------------------------------------------------------------------------|
+| rules.clusters         | List of Kafka clusters to fetch metrics for                                                                   |
+| rules.connectors       | List of connectors to fetch metrics for                                                                       |
+| rules.ksqls            | List of ksqlDB applications to fetch metrics for                                                              |
+| rules.schemaRegistries | List of Schema Registries id to fetch metrics for                                                              |
+| rules.labels           | Labels to exposed to Prometheus and group by in the query                                                     |
+| rules.topics           | Optional list of topics to filter the metrics                                                                 |
+| rules.metrics          | List of metrics to gather                                                                                     |
 
 ### Examples of configuration files
 
@@ -154,6 +157,8 @@ rules:
       - $CCLOUD_CONNECTOR
     ksqls:
       - $CCLOUD_KSQL
+    schemaRegistries:
+      - $CCLOUD_SCHEMA_REGISTRY
     metrics:
       - io.confluent.kafka.server/received_bytes
       - io.confluent.kafka.server/sent_bytes
@@ -170,6 +175,7 @@ rules:
       - io.confluent.kafka.connect/sent_records
       - io.confluent.kafka.connect/dead_letter_queue_records
       - io.confluent.kafka.ksql/streaming_unit_count
+      - io.confluent.kafka.schema_registry/schema_count
     labels:
       - kafka_id
       - topic

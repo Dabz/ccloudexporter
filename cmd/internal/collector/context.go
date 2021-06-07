@@ -29,6 +29,7 @@ type Rule struct {
 	Clusters                         []string `mapstructure:"clusters"`
 	Connectors                       []string `mapstructure:"connectors"`
 	Ksql                             []string `mapstructure:"ksqls"`
+	SchemaRegistries                 []string `mapstructure:"schemaregistries"`
 	Metrics                          []string `mapstructure:"metrics"`
 	GroupByLabels                    []string `mapstructure:"labels"`
 	cachedIgnoreGlobalResultForTopic map[TopicClusterMetric]bool
@@ -72,6 +73,7 @@ var DefaultMetrics = []string{
 	"io.confluent.kafka.connect/sent_records",
 	"io.confluent.kafka.connect/dead_letter_queue_records",
 	"io.confluent.kafka.ksql/streaming_unit_count",
+	"io.confluent.kafka.schema_registry/schema_count",
 }
 
 // GetMapOfMetrics returns the whitelist of metrics in a map
@@ -138,6 +140,18 @@ func (context ExporterContext) GetKsqlRules() []Rule {
 	}
 
 	return ksqlRules
+}
+
+// GetSchemaRegistryRules return all rules associated to at least one Schema Registry instance
+func (context ExporterContext) GetSchemaRegistryRules() []Rule {
+	schemaRegistryRules := make([]Rule, 0)
+	for _, irule := range Context.Rules {
+		if len(irule.SchemaRegistries) > 0 {
+			schemaRegistryRules = append(schemaRegistryRules, irule)
+		}
+	}
+
+	return schemaRegistryRules
 }
 
 // ShouldIgnoreResultForRule returns true if the result for this topic need to be ignored for this rule.
