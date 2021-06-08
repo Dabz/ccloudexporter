@@ -39,7 +39,7 @@ Usage of ./ccloudexporter:
   -listener string
     	Listener for the HTTP interface (default ":2112")
   -log-pretty-print
-    	Pretty print the JSON log output (default true)
+        Pretty print the JSON log output (default false)
   -no-timestamp
     	Do not propagate the timestamp from the the metrics API to prometheus
   -timeout int
