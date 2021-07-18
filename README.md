@@ -219,6 +219,26 @@ Nowadays, only the API key/secret is officially supported to connect to the Metr
 To ensure backward compatibility, previous environment variables are still available.
 Nonetheless, username/password is now **deprecated** and you **must** rely on API key/secret.
 
+# Integrations
+
+In real world, customers would want to integrate with their existing logging, monitoring and alerting solutions. Here, we're trying to accommodate as many tooling examples as possible to showcase how the Metrics API can be integrated with.
+
+## Splunk
+Let's take a look at how to see the cloud metrics on Splunk dashboard. Let's create a docker-compose yaml to include:
+* cclouder exporter image itself to pull metrics from the CCloud MetricsAPI
+* Splunk's Open Telemetry Collector that'd scrape from Prometheus' /metrics endpoint housed inside the cclouder exporter container
+* Splunk standalone container to receive the metrics
+* This set up is done by tweaking the needed details [here](https://github.com/signalfx/splunk-otel-collector/tree/main/examples/prometheus-federation) 
+
+### How to run 
+* Run the [docker.compose.yaml](./integration/splunk/docker-compose.yml) using command docker-compose up --build
+* Check analytics workspace [here](http://localhost:18000/en-US/app/search/analytics_workspace)
+* Metrics will show up like this:
+![Splunk metrics screenshot](./integration/splunk/splunk.png)
+
+
+
+
 # See Also
 
 For a tutorial that showcases how to use ccloudexporter, and steps through various failure scenarios to see how they are reflected in the provided metrics, see the [Observability for Apache Kafka® Clients to Confluent Cloud tutorial](https://docs.confluent.io/platform/current/tutorials/examples/ccloud-observability/docs/observability-overview.html).
