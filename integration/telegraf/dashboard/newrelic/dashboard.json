@@ -180,7 +180,7 @@
             "height": 2,
             "width": 6
           },
-          "title": "Egress record rate",
+          "title": "Egress Rate",
           "rawConfiguration": {
             "facet": {
               "showOtherSeries": true
@@ -191,7 +191,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3249865,
-                "query": "SELECT sum(CCloud.ccloud_metric_sent_records.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id LIMIT 10 SINCE 43200 seconds ago"
+                "query": "SELECT sum(CCloud.ccloud_metric_sent_bytes.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id LIMIT 10 SINCE 43200 seconds ago"
               }
             ],
             "yAxisLeft": {
@@ -240,7 +240,7 @@
             "height": 2,
             "width": 6
           },
-          "title": "Egress Rate",
+          "title": "Egress record rate",
           "rawConfiguration": {
             "facet": {
               "showOtherSeries": true
@@ -251,7 +251,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3249865,
-                "query": "SELECT sum(CCloud.ccloud_metric_sent_bytes.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id LIMIT 10 SINCE 43200 seconds ago"
+                "query": "SELECT sum(CCloud.ccloud_metric_sent_records.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id LIMIT 10 SINCE 43200 seconds ago"
               }
             ],
             "yAxisLeft": {
@@ -262,61 +262,13 @@
         },
         {
           "visualization": {
-            "id": "viz.pie"
-          },
-          "layout": {
-            "column": 1,
-            "row": 7,
-            "height": 4,
-            "width": 6
-          },
-          "title": "Topic Data Retention",
-          "rawConfiguration": {
-            "facet": {
-              "showOtherSeries": false
-            },
-            "nrqlQueries": [
-              {
-                "accountId": 3249865,
-                "query": "SELECT sum(CCloud.ccloud_metric_retained_bytes.gauge) FROM Metric FACET `topic` LIMIT 20 SINCE 1800 seconds ago"
-              }
-            ]
-          },
-          "linkedEntityGuids": null
-        },
-        {
-          "visualization": {
-            "id": "viz.pie"
-          },
-          "layout": {
-            "column": 7,
-            "row": 7,
-            "height": 4,
-            "width": 6
-          },
-          "title": "Request Type Distribution",
-          "rawConfiguration": {
-            "facet": {
-              "showOtherSeries": true
-            },
-            "nrqlQueries": [
-              {
-                "accountId": 3249865,
-                "query": "SELECT sum(CCloud.ccloud_metric_request_count.gauge) FROM Metric FACET `type` LIMIT 10 SINCE 1800 seconds ago"
-              }
-            ]
-          },
-          "linkedEntityGuids": null
-        },
-        {
-          "visualization": {
             "id": "viz.line"
           },
           "layout": {
             "column": 1,
-            "row": 11,
-            "height": 2,
-            "width": 6
+            "row": 7,
+            "height": 3,
+            "width": 3
           },
           "title": "Top 20 Topic Ingress Rate",
           "rawConfiguration": {
@@ -340,43 +292,13 @@
         },
         {
           "visualization": {
-            "id": "viz.area"
-          },
-          "layout": {
-            "column": 7,
-            "row": 11,
-            "height": 2,
-            "width": 6
-          },
-          "title": "Top 20 Topic Egress Rate",
-          "rawConfiguration": {
-            "facet": {
-              "showOtherSeries": true
-            },
-            "legend": {
-              "enabled": true
-            },
-            "nrqlQueries": [
-              {
-                "accountId": 3249865,
-                "query": "SELECT sum(CCloud.ccloud_metric_sent_bytes.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id,topic LIMIT 10 SINCE 43200 seconds ago"
-              }
-            ],
-            "yAxisLeft": {
-              "zero": true
-            }
-          },
-          "linkedEntityGuids": null
-        },
-        {
-          "visualization": {
             "id": "viz.line"
           },
           "layout": {
-            "column": 1,
-            "row": 13,
-            "height": 2,
-            "width": 6
+            "column": 4,
+            "row": 7,
+            "height": 3,
+            "width": 3
           },
           "title": "Top 20 Topic Ingress record rate",
           "rawConfiguration": {
@@ -404,9 +326,39 @@
           },
           "layout": {
             "column": 7,
-            "row": 13,
-            "height": 2,
-            "width": 6
+            "row": 7,
+            "height": 3,
+            "width": 3
+          },
+          "title": "Top 20 Topic Egress Rate",
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3249865,
+                "query": "SELECT sum(CCloud.ccloud_metric_sent_bytes.gauge) as Egress FROM Metric TIMESERIES FACET cluster_id,topic LIMIT 10 SINCE 43200 seconds ago"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          },
+          "linkedEntityGuids": null
+        },
+        {
+          "visualization": {
+            "id": "viz.area"
+          },
+          "layout": {
+            "column": 10,
+            "row": 7,
+            "height": 3,
+            "width": 3
           },
           "title": "Top 20 Topic Egress record rate",
           "rawConfiguration": {
@@ -430,11 +382,59 @@
         },
         {
           "visualization": {
+            "id": "viz.pie"
+          },
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "height": 4,
+            "width": 6
+          },
+          "title": "Topic Data Retention",
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3249865,
+                "query": "SELECT sum(CCloud.ccloud_metric_retained_bytes.gauge) FROM Metric FACET `topic` LIMIT 20 SINCE 1800 seconds ago"
+              }
+            ]
+          },
+          "linkedEntityGuids": null
+        },
+        {
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "layout": {
+            "column": 7,
+            "row": 10,
+            "height": 4,
+            "width": 6
+          },
+          "title": "Request Type Distribution",
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3249865,
+                "query": "SELECT sum(CCloud.ccloud_metric_request_count.gauge) FROM Metric FACET `type` LIMIT 10 SINCE 1800 seconds ago"
+              }
+            ]
+          },
+          "linkedEntityGuids": null
+        },
+        {
+          "visualization": {
             "id": "viz.line"
           },
           "layout": {
             "column": 1,
-            "row": 15,
+            "row": 14,
             "height": 3,
             "width": 6
           },
