@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+  ccloud_exporter:
+    image: dabz/ccloudexporter
+    hostname: ccloud_exporter
+    container_name: ccloud_exporter
+    ports:
+      - 2112:2112
+    environment:
+      CCLOUD_API_KEY: ${CCLOUD_API_KEY}
+      CCLOUD_API_SECRET: ${CCLOUD_API_SECRET}
+      CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
+      CCLOUD_CONNECTOR: ${CCLOUD_CONNECTOR}
+      CCLOUD_KSQL: ${CCLOUD_KSQL}
+
+  telegraf:
+    image: telegraf:latest
+    hostname: telegraf
+    container_name: telegraf
+    depends_on:
+        - ccloud_exporter
+    volumes:
+        - ./conf/${CCLOUD_TELEGRAF_TARGET}/telegraf.conf:/etc/telegraf/telegraf.conf:ro
