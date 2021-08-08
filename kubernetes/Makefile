@@ -1,4 +1,4 @@
--include ../ccloud_exporter.env
+-include ./ccloud_exporter.env
 CCLOUD_NS ?= ccloudexporter
 PROM_NS ?= monitoring
 
