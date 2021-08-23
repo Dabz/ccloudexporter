@@ -33,7 +33,7 @@ type Query struct {
 
 // Aggregation for a Confluent Cloud API metric
 type Aggregation struct {
-	Agg    string `json:"agg"`
+	Agg    string `json:"agg,omitempty"`
 	Metric string `json:"metric"`
 }
 
@@ -78,7 +78,6 @@ func BuildQuery(metric MetricDescription, clusters []string, groupByLabels []str
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
 	aggregation := Aggregation{
-		Agg:    "SUM",
 		Metric: metric.Name,
 	}
 
@@ -150,7 +149,6 @@ func BuildConnectorsQuery(metric MetricDescription, connectors []string, resourc
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
 	aggregation := Aggregation{
-		Agg:    "SUM",
 		Metric: metric.Name,
 	}
 
@@ -197,7 +195,6 @@ func BuildKsqlQuery(metric MetricDescription, ksqlAppIds []string, resource Reso
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
 	aggregation := Aggregation{
-		Agg:    "SUM",
 		Metric: metric.Name,
 	}
 
@@ -244,7 +241,6 @@ func BuildSchemaRegistryQuery(metric MetricDescription, schemaregistries []strin
 	timeFrom = timeFrom.Add(time.Duration(-timeFrom.Second()) * time.Second) // the seconds need to be stripped to have an effective delay
 
 	aggregation := Aggregation{
-		Agg:    "SUM",
 		Metric: metric.Name,
 	}
 
