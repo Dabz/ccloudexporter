@@ -43,12 +43,12 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
+      # Build and push Docker image with Buildx (pushed only to Dockerhub for master branch)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         uses: docker/build-push-action@v1
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
