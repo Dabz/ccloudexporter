@@ -43,12 +43,12 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
 
-      # Build and push Docker image with Buildx (pushed only to Dockerhub for master branch)
+      # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ github.ref == 'refs/heads/master' && 'dabz/ccloudexporter:latest' || steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
