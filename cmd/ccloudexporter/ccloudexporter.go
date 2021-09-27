@@ -22,6 +22,9 @@ func main() {
 	prometheus.MustRegister(ccollector)
 
 	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})
 	log.Printf("Listening on http://%s/metrics\n", collector.Context.Listener)
 	err := http.ListenAndServe(collector.Context.Listener, nil)
 	if err != nil {
