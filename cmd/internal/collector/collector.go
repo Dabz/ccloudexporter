@@ -35,6 +35,7 @@ type CCloudCollector struct {
 	connectorCollector      *ConnectorCCloudCollector
 	ksqlCollector           *KsqlCCloudCollector
 	schemaRegistryCollector *SchemaRegistryCCloudCollector
+	cache                   *CCloudCollectorCache
 }
 
 var (
@@ -52,12 +53,22 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect all metrics for Prometheus
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
+	if cc.cache.MaybeSendToChan(ch) {
+		return
+	}
+
 	var wg sync.WaitGroup
-	cc.kafkaCollector.Collect(ch, &wg)
-	cc.connectorCollector.Collect(ch, &wg)
-	cc.ksqlCollector.Collect(ch, &wg)
-	cc.schemaRegistryCollector.Collect(ch, &wg)
+	var wgCache sync.WaitGroup
+	cachedChan := make(chan prometheus.Metric)
+	cc.cache.Hijack(cachedChan, ch, &wgCache)
+
+	cc.kafkaCollector.Collect(cachedChan, &wg)
+	cc.connectorCollector.Collect(cachedChan, &wg)
+	cc.ksqlCollector.Collect(cachedChan, &wg)
+	cc.schemaRegistryCollector.Collect(cachedChan, &wg)
 	wg.Wait()
+	close(cachedChan)
+	wgCache.Wait()
 }
 
 // NewCCloudCollector creates a new instance of the collector
@@ -110,11 +121,13 @@ func NewCCloudCollector() CCloudCollector {
 	connectorCollector := NewConnectorCCloudCollector(collector, connectorResource)
 	ksqlCollector := NewKsqlCCloudCollector(collector, ksqlResource)
 	schemaRegistryCollector := NewSchemaRegistryCCloudCollector(collector, schemaRegistryResource)
+	cache := NewCache(Context.CachedSecond)
 
 	collector.kafkaCollector = &kafkaCollector
 	collector.connectorCollector = &connectorCollector
 	collector.ksqlCollector = &ksqlCollector
 	collector.schemaRegistryCollector = &schemaRegistryCollector
+	collector.cache = &cache
 
 	return collector
 }

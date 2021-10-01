@@ -32,6 +32,7 @@ func ParseOption() {
 	flag.StringVar(&Context.HTTPBaseURL, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
 	flag.StringVar(&Context.Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
 	flag.IntVar(&Context.Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
+	flag.IntVar(&Context.CachedSecond, "cached-second", 10, "Number of second that data will be cached in-memory and returned to Prometheus. This is a mechanism to protect the MetricsAPI from being flooded.")
 	flag.StringVar(&clusters, "cluster", "", "Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
 	flag.StringVar(&connectors, "connector", "", "Comma separated list of connector ID to fetch metric for. If not specified, the environment variable CCLOUD_CONNECTOR will be used")
 	flag.StringVar(&ksqlApplications, "ksqlDB", "", "Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used")
@@ -147,6 +148,7 @@ func parseConfigFile(configPath string) {
 	}
 
 	setIntIfExit(&Context.Delay, "config.delay")
+	setIntIfExit(&Context.CachedSecond, "config.cahedSecond")
 	setStringIfExit(&Context.Granularity, "config.granularity")
 	setStringIfExit(&Context.Listener, "config.listener")
 	setStringIfExit(&Context.HTTPBaseURL, "config.http.baseUrl")
