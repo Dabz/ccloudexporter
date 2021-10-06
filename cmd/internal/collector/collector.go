@@ -53,23 +53,41 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect all metrics for Prometheus
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
+	if Context.CachedSecond > 0 {
+		cc.collectWithtCache(ch)
+	} else {
+		cc.collectWithoutCache(ch)
+	}
+}
+
+func (cc CCloudCollector) collectWithoutCache(ch chan<- prometheus.Metric) {
+	cc.collectAllCollectors(ch)
+}
+
+func (cc CCloudCollector) collectWithtCache(ch chan<- prometheus.Metric) {
 	if cc.cache.MaybeSendToChan(ch) {
 		return
 	}
 
-	var wg sync.WaitGroup
 	var wgCache sync.WaitGroup
 	cachedChan := make(chan prometheus.Metric)
 	cc.cache.Hijack(cachedChan, ch, &wgCache)
+	cc.collectAllCollectors(cachedChan)
 
-	cc.kafkaCollector.Collect(cachedChan, &wg)
-	cc.connectorCollector.Collect(cachedChan, &wg)
-	cc.ksqlCollector.Collect(cachedChan, &wg)
-	cc.schemaRegistryCollector.Collect(cachedChan, &wg)
-	wg.Wait()
 	close(cachedChan)
 	wgCache.Wait()
 }
+
+func (cc CCloudCollector) collectAllCollectors(ch chan<- prometheus.Metric) {
+	var wg sync.WaitGroup
+	cc.kafkaCollector.Collect(ch, &wg)
+	cc.connectorCollector.Collect(ch, &wg)
+	cc.ksqlCollector.Collect(ch, &wg)
+	cc.schemaRegistryCollector.Collect(ch, &wg)
+	wg.Wait()
+}
+
+
 
 // NewCCloudCollector creates a new instance of the collector
 // During the creation, we invoke the descriptor endpoint to fetcha all

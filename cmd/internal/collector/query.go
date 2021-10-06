@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -298,6 +299,19 @@ func SendQuery(query Query) (QueryResponse, error) {
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
+		if IsFatal(res) {
+			log.WithFields(log.Fields{"StatusCode": res.StatusCode, "Endpoint": endpoint, "body": string(body)}).Fatalln("Stopping the exporter due to fatal issue while querying the Metrics API")
+		}
+		if res.StatusCode == 429 {
+			log.WithFields(log.Fields{
+				"StatusCode": res.StatusCode,
+				"Endpoint":   endpoint,
+				"body":       string(body),
+				"reasons":    "You probably scrape the ccloudexporter too frequently, you should probably increase Prometheus `scrape_interval`",
+			}).Errorln("Received invalid response")
+			errorMsg := fmt.Sprintf("Received status code %d instead of 200 for POST on %s (%s). It generally means that you scrape too frequently, you should probably increase Prometheus `scrape_interval`", res.StatusCode, endpoint, string(body))
+			return QueryResponse{}, errors.New(errorMsg)
+		}
 		log.WithFields(log.Fields{"StatusCode": res.StatusCode, "Endpoint": endpoint, "body": string(body)}).Errorln("Received invalid response")
 		errorMsg := fmt.Sprintf("Received status code %d instead of 200 for POST on %s (%s)", res.StatusCode, endpoint, string(body))
 		return QueryResponse{}, errors.New(errorMsg)
@@ -313,4 +327,17 @@ func SendQuery(query Query) (QueryResponse, error) {
 	json.Unmarshal(body, &response)
 
 	return response, nil
+}
+
+// IsFatal returns true if the http response is not worth retrying
+func IsFatal(res *http.Response) bool {
+	if res.StatusCode == 403 {
+		return true
+	}
+
+	if res.StatusCode == 401 {
+		return true
+	}
+
+	return false
 }

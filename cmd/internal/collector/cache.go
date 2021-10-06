@@ -35,7 +35,7 @@ func (ccc *CCloudCollectorCache) MaybeSendToChan(ch chan<- prometheus.Metric) bo
 	return false
 }
 
-// Record all data from the chanel into the cache
+// Hijack all data from the chanel into the cache and forward them to another chan
 func (ccc *CCloudCollectorCache) Hijack(ch chan prometheus.Metric, origCh chan<- prometheus.Metric, wg *sync.WaitGroup) {
 	log.Trace("Populating cache")
 	ccc.cachedValue = []prometheus.Metric{}
@@ -50,6 +50,7 @@ func (ccc *CCloudCollectorCache) Hijack(ch chan prometheus.Metric, origCh chan<-
 	}(ch, origCh)
 }
 
+// SendToChan all cached data
 func (ccc *CCloudCollectorCache) SendToChan(ch chan<- prometheus.Metric) {
 	for _, metric := range ccc.cachedValue {
 		ch <- metric

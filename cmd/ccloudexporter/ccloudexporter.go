@@ -8,15 +8,20 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/Dabz/ccloudexporter/cmd/internal/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func main() {
 	collector.ParseOption()
+	log.WithFields(log.Fields{
+		"Configuration": fmt.Sprintf("%+v", collector.Context),
+	}).Info("ccloudexporter is starting")
 
 	ccollector := collector.NewCCloudCollector()
 	prometheus.MustRegister(ccollector)
@@ -25,7 +30,10 @@ func main() {
 	http.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
 	})
-	log.Printf("Listening on http://%s/metrics\n", collector.Context.Listener)
+
+	log.WithFields(log.Fields{
+		"PrometheusEndpoint": fmt.Sprintf("http://%s/metrics", collector.Context.Listener),
+	}).Info("ccloudexporter is running")
 	err := http.ListenAndServe(collector.Context.Listener, nil)
 	if err != nil {
 		panic(err)

@@ -1,5 +1,5 @@
 # STEP 1 build executable binary
-FROM golang:1.14 AS builder
+FROM golang:1.17 AS builder
 COPY . /src
 WORKDIR /src
 RUN CGO_ENABLED=0 GOOS=linux go install -ldflags "-X github.com/Dabz/ccloudexporter/cmd/internal/collector.Version=$(git rev-parse --short HEAD)" ./...
