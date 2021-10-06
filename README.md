@@ -20,6 +20,8 @@ To use the exporter, the following environment variables need to be specified:
 
 ```
 Usage of ./ccloudexporter:
+  -cached-second int
+    	Number of second that data will be cached in-memory and returned to Prometheus. This is a mechanism to protect the MetricsAPI from being flooded. (default 30)
   -cluster string
     	Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used
   -config string
@@ -120,6 +122,7 @@ If you do not provide a configuration file, the exporter creates one from the pr
 | config.noTimestamp  | Do not propagate the timestamp from the metrics API to prometheus                                             | false                                  |
 | config.delay        | Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points | 120                                    |
 | config.granularity  | Granularity for the metrics query, by default set to 1 minute                                                 | PT1M                                   |
+| config.cachedSecond | Number of second that data will be cached in-memory and returned to Prometheus.                               | 30                                     |
 | rules               | List of rules that need to be executed to fetch metrics                                                       |                                        |
 
 #### Rule configuration
@@ -129,7 +132,7 @@ If you do not provide a configuration file, the exporter creates one from the pr
 | rules.clusters         | List of Kafka clusters to fetch metrics for                                                                   |
 | rules.connectors       | List of connectors to fetch metrics for                                                                       |
 | rules.ksqls            | List of ksqlDB applications to fetch metrics for                                                              |
-| rules.schemaRegistries | List of Schema Registries id to fetch metrics for                                                              |
+| rules.schemaRegistries | List of Schema Registries id to fetch metrics for                                                             |
 | rules.labels           | Labels to exposed to Prometheus and group by in the query                                                     |
 | rules.topics           | Optional list of topics to filter the metrics                                                                 |
 | rules.metrics          | List of metrics to gather                                                                                     |
@@ -150,6 +153,7 @@ config:
   noTimestamp: false
   delay: 60
   granularity: PT1M
+  cachedSecond: 30
 rules:
   - clusters:
       - $CCLOUD_CLUSTER

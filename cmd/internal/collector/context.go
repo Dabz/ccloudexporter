@@ -13,13 +13,14 @@ import "strings"
 // This global variables define all timeout, user configuration,
 // and cluster information
 type ExporterContext struct {
-	HTTPTimeout int
-	HTTPBaseURL string
-	Delay       int
-	Granularity string
-	NoTimestamp bool
-	Listener    string
-	Rules       []Rule
+	HTTPTimeout  int
+	HTTPBaseURL  string
+	Delay        int
+	CachedSecond int
+	Granularity  string
+	NoTimestamp  bool
+	Listener     string
+	Rules        []Rule
 }
 
 // Rule defines one or multiple metrics that the exporter
