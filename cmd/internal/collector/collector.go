@@ -35,6 +35,7 @@ type CCloudCollector struct {
 	connectorCollector      *ConnectorCCloudCollector
 	ksqlCollector           *KsqlCCloudCollector
 	schemaRegistryCollector *SchemaRegistryCCloudCollector
+	cache                   *CCloudCollectorCache
 }
 
 var (
@@ -52,6 +53,32 @@ func (cc CCloudCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect all metrics for Prometheus
 // to avoid reaching the scrape_timeout, metrics are fetched in multiple goroutine
 func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
+	if Context.CachedSecond > 0 {
+		cc.collectWithtCache(ch)
+	} else {
+		cc.collectWithoutCache(ch)
+	}
+}
+
+func (cc CCloudCollector) collectWithoutCache(ch chan<- prometheus.Metric) {
+	cc.collectAllCollectors(ch)
+}
+
+func (cc CCloudCollector) collectWithtCache(ch chan<- prometheus.Metric) {
+	if cc.cache.MaybeSendToChan(ch) {
+		return
+	}
+
+	var wgCache sync.WaitGroup
+	cachedChan := make(chan prometheus.Metric)
+	cc.cache.Hijack(cachedChan, ch, &wgCache)
+	cc.collectAllCollectors(cachedChan)
+
+	close(cachedChan)
+	wgCache.Wait()
+}
+
+func (cc CCloudCollector) collectAllCollectors(ch chan<- prometheus.Metric) {
 	var wg sync.WaitGroup
 	cc.kafkaCollector.Collect(ch, &wg)
 	cc.connectorCollector.Collect(ch, &wg)
@@ -59,6 +86,8 @@ func (cc CCloudCollector) Collect(ch chan<- prometheus.Metric) {
 	cc.schemaRegistryCollector.Collect(ch, &wg)
 	wg.Wait()
 }
+
+
 
 // NewCCloudCollector creates a new instance of the collector
 // During the creation, we invoke the descriptor endpoint to fetcha all
@@ -110,11 +139,13 @@ func NewCCloudCollector() CCloudCollector {
 	connectorCollector := NewConnectorCCloudCollector(collector, connectorResource)
 	ksqlCollector := NewKsqlCCloudCollector(collector, ksqlResource)
 	schemaRegistryCollector := NewSchemaRegistryCCloudCollector(collector, schemaRegistryResource)
+	cache := NewCache(Context.CachedSecond)
 
 	collector.kafkaCollector = &kafkaCollector
 	collector.connectorCollector = &connectorCollector
 	collector.ksqlCollector = &ksqlCollector
 	collector.schemaRegistryCollector = &schemaRegistryCollector
+	collector.cache = &cache
 
 	return collector
 }

@@ -5,6 +5,7 @@ config:
   listener: 0.0.0.0:2112
   noTimestamp: false
   delay: 120
+  cachedSecond: 30
   granularity: PT1M
 rules:
   - clusters:
