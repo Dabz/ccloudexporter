@@ -229,16 +229,18 @@ In real world, customers would want to integrate with their existing logging, mo
 
 ## Splunk
 Let's take a look at how to see the cloud metrics on Splunk dashboard. A docker-compose yaml is created to include:
-* cclouder exporter image itself to pull metrics from the CCloud MetricsAPI
-* Splunk's Open Telemetry Collector that'd scrape from Prometheus' /metrics endpoint housed inside the cclouder exporter container
-* Splunk standalone container to receive the metrics
-* This set up is done by tweaking the needed details [here](https://github.com/signalfx/splunk-otel-collector/tree/main/examples/prometheus-federation) 
+* cclouder exporter image to pull metrics from the CCloud MetricsAPI
+* kafka lag exporter image to pull consumer-group metrics from the Admin client
+* Splunk's Open Telemetry Collector image that'd receive metrics from Prometheus' /metrics endpoint
+* Splunk's standalone container to view the Analytics dashboard
+* This set up is done by tweaking the needed details [here](https://github.com/signalfx/splunk-otel-collector/tree/main/examples/prometheus-federation)
 
-### How to run 
+### How to run
+* Set CCloud-related parameters in both [docker.compose.yaml](./integration/splunk/docker-compose.yaml) and [application.conf](./integration/splunk/kafka-lag-exporter/application.conf) files
 * Run the [docker.compose.yaml](./integration/splunk/docker-compose.yaml) using command docker-compose up --build
 * Check analytics workspace [here](http://localhost:18000/en-US/app/search/analytics_workspace)
 * Metrics will show up like this:
-![Splunk metrics screenshot](./integration/splunk/splunk.png)
+  ![Splunk metrics screenshot](./integration/splunk/splunk.png)
 
 
 

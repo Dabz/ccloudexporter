@@ -8,23 +8,28 @@ services:
     hostname: ccloud_exporter
     container_name: ccloud_exporter
     environment:
-      CCLOUD_API_KEY: DGOIFFNPQUQWQHEX
-      CCLOUD_API_SECRET: XokY8ba0eCyK2ev4Ru2VPtEHgUjMYV2nk7dRUhIQE9XnOpoibfzoEklNDWjZ7JJu
-      CCLOUD_CLUSTER: lkc-n9jod
-
+      CCLOUD_API_KEY: <<CCLOUD_API_KEY>>
+      CCLOUD_API_SECRET: <<CCLOUD_API_SECRET>>
+      CCLOUD_CLUSTER: <<CCLOUD_CLUSTER>> #lkc-XXXX
+  # Import kafka-lag 
   kafka-lag-exporter:
     image: lightbend/kafka-lag-exporter:0.5.5
-    container_name: kafka-lag-exporter
-    hostname: kafka-lag-exporter
+    hostname: kafka-lag-exporter 
+    container_name: kafka-lag-exporter 
     restart: always
     ports:
-      - '9999:9999'
+     - 9999:9999
     volumes:
-      - ./monitoring_configs/kafka-lag-exporter/:/opt/docker/conf/
-    environment:
-      - CLOUD_CLUSTER=$CLOUD_CLUSTER
-      - BOOTSTRAP_SERVERS=$BOOTSTRAP_SERVERS
-      - SASL_JAAS_CONFIG=$SASL_JAAS_CONFIG
+     - ./kafka-lag-exporter/application.conf:/opt/docker/conf/application.conf
+     - ./kafka-lag-exporter/logback.xml:/opt/docker/conf/logback.xml
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
   # Splunk Enterprise server:
   splunk:
