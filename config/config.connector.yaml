@@ -6,6 +6,7 @@ config:
   noTimestamp: false
   delay: 120
   granularity: PT1M
+  cachedSecond: 30
 rules:
   - clusters:
       - lkc-xxxxx

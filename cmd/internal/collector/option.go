@@ -32,11 +32,12 @@ func ParseOption() {
 	flag.StringVar(&Context.HTTPBaseURL, "endpoint", "https://api.telemetry.confluent.cloud/", "Base URL for the Metric API")
 	flag.StringVar(&Context.Granularity, "granularity", "PT1M", "Granularity for the metrics query, by default set to 1 minutes")
 	flag.IntVar(&Context.Delay, "delay", 120, "Delay, in seconds, to fetch the metrics. By default set to 120, this, in order to avoid temporary data points.")
+	flag.IntVar(&Context.CachedSecond, "cached-second", 30, "Number of second that data will be cached in-memory and returned to Prometheus. This is a mechanism to protect the MetricsAPI from being flooded.")
 	flag.StringVar(&clusters, "cluster", "", "Comma separated list of cluster ID to fetch metric for. If not specified, the environment variable CCLOUD_CLUSTER will be used")
 	flag.StringVar(&connectors, "connector", "", "Comma separated list of connector ID to fetch metric for. If not specified, the environment variable CCLOUD_CONNECTOR will be used")
 	flag.StringVar(&ksqlApplications, "ksqlDB", "", "Comma separated list of ksqlDB application to fetch metric for. If not specified, the environment variable CCLOUD_KSQL will be used")
 	flag.StringVar(&schemaRegistries, "schemaRegistry", "", "Comma separated list of Schema Registry ID to fetch metric for. If not specified, the environment variable CCLOUD_SCHEMA_REGISTRY will be used")
-	flag.StringVar(&Context.Listener, "listener", ":2112", "Listener for the HTTP interface")
+	flag.StringVar(&Context.Listener, "listener", "0.0.0.0:2112", "Listener for the HTTP interface")
 	flag.BoolVar(&Context.NoTimestamp, "no-timestamp", false, "Do not propagate the timestamp from the the metrics API to prometheus")
 	versionFlag := flag.Bool("version", false, "Print the current version and exit")
 	verboseFlag := flag.Bool("verbose", false, "Print trace level logs to stdout")
@@ -147,6 +148,7 @@ func parseConfigFile(configPath string) {
 	}
 
 	setIntIfExit(&Context.Delay, "config.delay")
+	setIntIfExit(&Context.CachedSecond, "config.cachedSecond")
 	setStringIfExit(&Context.Granularity, "config.granularity")
 	setStringIfExit(&Context.Listener, "config.listener")
 	setStringIfExit(&Context.HTTPBaseURL, "config.http.baseUrl")
