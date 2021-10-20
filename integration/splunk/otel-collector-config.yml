@@ -4,10 +4,10 @@ receivers:
         # the federation endpoint:
         # Read more about it here: https://prometheus.io/docs/prometheus/latest/federation/
         # You can query the federation with PromQL, encoded as part of the query string.
-        endpoint: ccloud_exporter:2112
-        metrics_path: /metrics
+        endpoint: prometheus:9090
+        metrics_path: /federate
         params:
-            match[]: '{job="counter"}'
+            match[]: '{job="ccloud_metrics"}'
     otlp:
         protocols:
             grpc:
