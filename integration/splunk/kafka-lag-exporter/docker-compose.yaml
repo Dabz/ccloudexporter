@@ -1,31 +1,5 @@
 version: "3"
 services:
-  # Sample Go application producing counter metrics.
-  ccloud_exporter:
-    image: dabz/ccloudexporter
-    ports:
-      - '2112:2112'
-    hostname: ccloud_exporter
-    container_name: ccloud_exporter
-    environment:
-      CCLOUD_API_KEY: DGOIFFNPQUQWQHEX
-      CCLOUD_API_SECRET: XokY8ba0eCyK2ev4Ru2VPtEHgUjMYV2nk7dRUhIQE9XnOpoibfzoEklNDWjZ7JJu
-      CCLOUD_CLUSTER: lkc-n9jod
-
-  kafka-lag-exporter:
-    image: lightbend/kafka-lag-exporter:0.5.5
-    container_name: kafka-lag-exporter
-    hostname: kafka-lag-exporter
-    restart: always
-    ports:
-      - '9999:9999'
-    volumes:
-      - ./monitoring_configs/kafka-lag-exporter/:/opt/docker/conf/
-    environment:
-      - CLOUD_CLUSTER=$CLOUD_CLUSTER
-      - BOOTSTRAP_SERVERS=$BOOTSTRAP_SERVERS
-      - SASL_JAAS_CONFIG=$SASL_JAAS_CONFIG
-
   # Splunk Enterprise server:
   splunk:
     image: splunk/splunk:latest
@@ -54,5 +28,16 @@ services:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
     depends_on:
       - splunk
-      - ccloud_exporter
       - kafka-lag-exporter
+
+  # Kafka Lag Exporter
+  kafka-lag-exporter:
+    image: lightbend/kafka-lag-exporter:0.6.7
+    hostname: kafka-lag-exporter
+    container_name: kafka-lag-exporter
+    restart: always
+    ports:
+      - 8000:8000
+    volumes:
+      - ./application.conf:/opt/docker/conf/application.conf
+      - ./logback.xml:/opt/docker/conf/logback.xml
