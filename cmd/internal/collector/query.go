@@ -69,7 +69,7 @@ type QueryResponse struct {
 // }
 
 var (
-	queryURI = "/v2/metrics/cloud/query"
+	queryURI = "v2/metrics/cloud/query"
 )
 
 // BuildQuery creates a new Query for a metric for a specific cluster and time interval
