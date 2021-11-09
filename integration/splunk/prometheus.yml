@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: ccloud_metrics # To get metrics about the exporter itself
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - ccloud_exporter:2112
+          - kafka-lag-exporter:9999
