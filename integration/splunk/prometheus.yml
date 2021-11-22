@@ -1,9 +1,11 @@
 global:
-  scrape_interval: 5s
+  scrape_interval: 15s
 
 scrape_configs:
-  - job_name: ccloud_metrics # To get metrics about the exporter itself
-    metrics_path: /metrics
+  - job_name: ccloud_metrics
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    honor_timestamps: true
     static_configs:
       - targets:
           - ccloud_exporter:2112
