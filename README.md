@@ -236,10 +236,18 @@ Let's take a look at how to see the cloud metrics on Splunk dashboard. A docker-
 * This set up is done by tweaking the needed details [here](https://github.com/signalfx/splunk-otel-collector/tree/main/examples/prometheus-federation)
 
 ### How to run
-* Set CCloud-related parameters in both [docker.compose.yaml](./integration/splunk/docker-compose.yaml) and [application.conf](./integration/splunk/kafka-lag-exporter/application.conf) files
-* Run the [docker.compose.yaml](./integration/splunk/docker-compose.yaml) using command docker-compose up --build
-* Check analytics workspace [here](http://localhost:18000/en-US/app/search/analytics_workspace)
-* Metrics will show up like this:
+- Set CCloud-related parameters in both [docker.compose.yaml](./integration/splunk/docker-compose.yaml) and [application.conf](./integration/splunk/kafka-lag-exporter/application.conf) files.  Alternatively you can set these as environment variables before launching `docker-compose`:
+  - `CCLOUD_API_KEY`
+  - `CCLOUD_API_SECRET`
+  - `CCLOUD_CLUSTER`
+  - `CCLOUD_CONNECTOR`
+  - `CCLOUD_KSQL`
+  - `CCLOUD_ADMIN_API_KEY`
+  - `CCLOUD_ADMIN_API_SECRET`
+  - `CCLOUD_BOOTSTRAP_SERVER`
+- Run the [docker.compose.yaml](./integration/splunk/docker-compose.yaml) using command `docker-compose up --build`
+- Check analytics workspace [here](http://localhost:18000/en-US/app/search/analytics_workspace)
+- Metrics will show up like this:
   ![Splunk metrics screenshot](./integration/splunk/splunk.png)
 
 

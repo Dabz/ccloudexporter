@@ -1,5 +1,7 @@
 version: "3"
+
 services:
+
   # Sample Go application producing counter metrics.
   ccloud_exporter:
     image: dabz/ccloudexporter
@@ -8,15 +10,22 @@ services:
     hostname: ccloud_exporter
     container_name: ccloud_exporter
     environment:
-      CCLOUD_API_KEY: <<CCLOUD_API_KEY>>
-      CCLOUD_API_SECRET: <<CCLOUD_API_SECRET>>
-      CCLOUD_CLUSTER: <<CCLOUD_CLUSTER>> #lkc-XXXX
+      CCLOUD_API_KEY: ${CCLOUD_API_KEY}
+      CCLOUD_API_SECRET: ${CCLOUD_API_SECRET}
+      CCLOUD_CLUSTER: ${CCLOUD_CLUSTER}
+      CCLOUD_CONNECTOR: ${CCLOUD_CONNECTOR}
+      CCLOUD_KSQL: ${CCLOUD_KSQL}
+
   # Import kafka-lag 
   kafka-lag-exporter:
-    image: lightbend/kafka-lag-exporter:0.5.5
+    image: lightbend/kafka-lag-exporter:0.6.7
     hostname: kafka-lag-exporter 
     container_name: kafka-lag-exporter 
     restart: always
+    environment:
+      CCLOUD_ADMIN_API_KEY: ${CCLOUD_ADMIN_API_KEY}
+      CCLOUD_ADMIN_API_SECRET: ${CCLOUD_ADMIN_API_SECRET}
+      CCLOUD_BOOTSTRAP_SERVER: ${CCLOUD_BOOTSTRAP_SERVER}
     ports:
      - 9999:9999
     volumes:
@@ -50,11 +59,12 @@ services:
       - ./splunk.yml:/tmp/defaults/default.yml
       - /opt/splunk/var
       - /opt/splunk/etc
+
   # OpenTelemetry Collector
   otelcollector:
-    image: quay.io/signalfx/splunk-otel-collector:0.29.0
+    image: quay.io/signalfx/splunk-otel-collector:0.39.0
     container_name: otelcollector
-    command: ["--config=/etc/otel-collector-config.yml", "--log-level=DEBUG"]
+    command: ["--config=/etc/otel-collector-config.yml", "--set=service.telemetry.logs.level=debug"]
     volumes:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
     depends_on:
